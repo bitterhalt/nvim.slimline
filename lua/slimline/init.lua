@@ -59,6 +59,8 @@ local function set_colors()
 		bold = true,
 	})
 	vim.api.nvim_set_hl(0, "SlimlineSingle", { bg = bg, fg = fg, ctermfg = 7, bold = true })
+	vim.api.nvim_set_hl(0, "SlimlineClose", { bg = bg, fg = fg, ctermfg = 7 })
+	vim.api.nvim_set_hl(0, "SlimlineModified", { bg = bg, fg = terminal_color(2, fg), ctermfg = 2, bold = true })
 	vim.api.nvim_set_hl(0, "SlimlineError", { bg = bg, fg = terminal_color(1, fg), ctermfg = 1 })
 	vim.api.nvim_set_hl(0, "SlimlineWarning", { bg = bg, fg = terminal_color(3, fg), ctermfg = 3 })
 	vim.api.nvim_set_hl(0, "SlimlineGit", { bg = bg, fg = terminal_color(6, fg), ctermfg = 6 })
@@ -175,8 +177,12 @@ local function buffers()
 			end
 			local modified = vim.bo[buf].modified and options.modified_icon ~= "" and (" " .. options.modified_icon) or ""
 			local label = " " .. icon .. name .. modified .. " "
-			local close = not vim.bo[buf].modified and options.close_icon ~= "" and (options.close_icon .. " ") or ""
-			result[#result + 1] = { buf = buf, label = label, close = close, width = width(label .. close) }
+			local close = buf ~= vim.api.nvim_get_current_buf() and not vim.bo[buf].modified
+				and options.close_icon ~= "" and (options.close_icon .. " ") or ""
+			result[#result + 1] = {
+				buf = buf, label = label, name = " " .. icon .. name, modified = modified,
+				close = close, width = width(label .. close),
+			}
 		end
 	end
 	return result
@@ -257,6 +263,8 @@ end
 local function buffer_label(item, style, available)
 	local close = item.close
 	local label = item.label
+	local focused = style == "SlimlineActive" or style == "SlimlineSingle"
+	local modified = item.modified
 	if available then
 		-- Keep a close target when there is also room for a useful label.
 		if available < width(close) + 2 then
@@ -264,9 +272,14 @@ local function buffer_label(item, style, available)
 		end
 		label = truncate(label, available - width(close))
 	end
-	local result = "%#" .. style .. "#%" .. item.buf .. "@v:lua.SlimlineClick@" .. escape(label) .. "%T"
+	local text = escape(label)
+	if focused and modified ~= "" and (not available or width(item.label) <= available - width(close)) then
+		text = escape(item.name) .. "%#SlimlineModified#" .. escape(modified) .. "%#" .. style .. "# "
+	end
+	local result = "%#" .. style .. "#%" .. item.buf .. "@v:lua.SlimlineClick@" .. text .. "%T"
 	if close ~= "" then
-		result = result .. "%" .. item.buf .. "@v:lua.SlimlineClose@" .. escape(close) .. "%T"
+		result = result .. "%#" .. (focused and "SlimlineClose" or "SlimlineBase") .. "#%"
+			.. item.buf .. "@v:lua.SlimlineClose@" .. escape(close) .. "%T"
 	end
 	return result
 end

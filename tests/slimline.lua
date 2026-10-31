@@ -102,8 +102,10 @@ end))
 vim.system = system
 vim.bo[second].modified = true
 assert(not slimline.render():find("%" .. second .. "@v:lua.SlimlineClose@", 1, true))
+assert(slimline.render():find("%#SlimlineModified# *", 1, true))
 vim.bo[second].modified = false
-assert(slimline.render():find("%" .. second .. "@v:lua.SlimlineClose@", 1, true))
+assert(not slimline.render():find("%" .. second .. "@v:lua.SlimlineClose@", 1, true))
+assert(slimline.render():find("%" .. first .. "@v:lua.SlimlineClose@", 1, true))
 slimline.setup({
 	icons = false,
 	mode = { labels = { n = "NORMAL" } },

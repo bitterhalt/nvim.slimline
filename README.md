@@ -105,7 +105,8 @@ highlights = {
 }
 ```
 
-Groups: `SlimlineBase`, `SlimlineText`, `SlimlineActive`, `SlimlineError`,
+Groups: `SlimlineBase`, `SlimlineText`, `SlimlineActive`, `SlimlineClose`,
+`SlimlineModified`, `SlimlineError`,
 `SlimlineWarning`, `SlimlineGit`, `SlimlineRecording`, `SlimlineSingle`,
 and `SlimlineModeNormal`, `SlimlineModeInsert`,
 `SlimlineModeVisual`, `SlimlineModeReplace`, `SlimlineModeCommand`,
