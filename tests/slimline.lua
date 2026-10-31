@@ -99,5 +99,38 @@ assert(vim.wait(1000, function()
 	return slimline.render():find(" @abc1234", 1, true) ~= nil
 end))
 vim.system = system
+slimline.setup({
+	icons = false,
+	mode = { labels = { n = "NORMAL" } },
+	buffers = { close_icon = "x%", modified_icon = "+", exclude_filetypes = { "lua" } },
+	git = { enabled = false },
+	cursor = { separator = " / ", progress = false },
+	highlights = { SlimlineActive = { fg = "#abcdef", bold = false } },
+})
+rendered = slimline.render()
+assert(rendered:find(" NORMAL ", 1, true), rendered)
+assert(not rendered:find("%#SlimlineActive#", 1, true), rendered)
+assert(not rendered:find("", 1, true), rendered)
+assert(rendered:find("@v:lua.SlimlineClick@ shared.lua ", 1, true), rendered)
+assert(rendered:find("@v:lua.SlimlineClose@x%% ", 1, true), rendered)
+assert(vim.api.nvim_get_hl(0, { name = "SlimlineActive" }).fg == 0xabcdef)
+vim.cmd("doautocmd ColorScheme")
+assert(vim.api.nvim_get_hl(0, { name = "SlimlineActive" }).fg == 0xabcdef)
+vim.diagnostic.set(namespace, second, {
+	{ lnum = 0, col = 0, message = "error", severity = vim.diagnostic.severity.ERROR },
+})
+slimline.setup({ diagnostics = { error = "ERR%" }, git = { enabled = false }, cursor = { separator = " / " } })
+rendered = slimline.render()
+assert(rendered:find("ERR%% 1", 1, true), rendered)
+assert(rendered:find(" / ", 1, true), rendered)
+assert(rendered:find("@v:lua.SlimlineClose@× ", 1, true), rendered)
+slimline.setup({
+	mode = { enabled = false }, buffers = { enabled = false },
+	diagnostics = { enabled = false }, git = { enabled = false }, cursor = { enabled = false },
+})
+assert(vim.api.nvim_eval_statusline(slimline.render(), {}).str:match("^%s*$"))
+assert(not pcall(slimline.setup, { buffers = { max_name_length = 0 } }))
+assert(not pcall(slimline.setup, { git = false }))
+assert(not pcall(slimline.setup, { unknown = true }))
 print("Slimline regression tests passed")
 vim.cmd("qa!")

@@ -1,45 +1,8 @@
 -- Slimline: one native statusline for mode, buffers and cursor.
 -- Optional dependency: nvim-web-devicons.
 local M = {}
-local git = {}
-
-local function git_directory()
-	if vim.bo.buftype ~= "" then
-		return nil
-	end
-	local name = vim.api.nvim_buf_get_name(0)
-	return name == "" and vim.fn.getcwd() or vim.fn.fnamemodify(name, ":h")
-end
-
-local function refresh_git()
-	local directory = git_directory()
-	if not directory or vim.fn.executable("git") ~= 1 then
-		return
-	end
-	local entry = git[directory] or { label = "" }
-	git[directory] = entry
-	if entry.pending then
-		return
-	end
-	entry.pending = true
-	vim.system({ "git", "-C", directory, "symbolic-ref", "--quiet", "--short", "HEAD" }, { text = true }, function(result)
-		local branch = result.code == 0 and vim.trim(result.stdout or "") or ""
-		local function finish(label)
-			vim.schedule(function()
-				entry.label = label
-				entry.pending = false
-				vim.cmd("redrawstatus")
-			end)
-		end
-		if result.code == 1 then
-			vim.system({ "git", "-C", directory, "rev-parse", "--short", "HEAD" }, { text = true }, function(commit)
-				finish(commit.code == 0 and ("@" .. vim.trim(commit.stdout or "")) or "")
-			end)
-		else
-			finish(branch)
-		end
-	end)
-end
+local config = require("slimline.config")
+local git = require("slimline.git")
 
 local modes = {
 	n = "N",
@@ -110,6 +73,10 @@ local function set_colors()
 			bold = true,
 		})
 	end
+	for name, override in pairs(config.options.highlights) do
+		local value = override.link and override or vim.tbl_extend("force", group(name), override)
+		vim.api.nvim_set_hl(0, name, value)
+	end
 end
 
 local function mode_style(mode)
@@ -154,6 +121,9 @@ local function truncate(text, space)
 end
 
 local function icon_for(name, ft)
+	if not config.options.icons then
+		return ""
+	end
 	local ok, devicons = pcall(require, "nvim-web-devicons")
 	if not ok then
 		return ""
@@ -170,15 +140,24 @@ end
 
 local function buffers()
 	local result = {}
+	local options = config.options.buffers
+	if not options.enabled then
+		return result
+	end
+	local function included(buf)
+		return vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted
+			and not vim.tbl_contains(options.exclude_filetypes, vim.bo[buf].filetype)
+			and not vim.tbl_contains(options.exclude_buftypes, vim.bo[buf].buftype)
+	end
 	local counts = {}
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-		if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted then
+		if included(buf) then
 			local name = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(buf), ":t")
 			counts[name] = (counts[name] or 0) + 1
 		end
 	end
 	for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-		if vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted then
+		if included(buf) then
 			local path = vim.api.nvim_buf_get_name(buf)
 			local name = path == "" and "[No Name]" or vim.fn.fnamemodify(path, ":t")
 			local icon = icon_for(name, vim.bo[buf].filetype)
@@ -188,10 +167,12 @@ local function buffers()
 			elseif path == "" and counts[""] > 1 then
 				name = name .. " " .. buf
 			else
-				name = truncate(name, 20)
+				name = truncate(name, options.max_name_length)
 			end
-			local label = " " .. icon .. name .. (vim.bo[buf].modified and " *" or "") .. " "
-			result[#result + 1] = { buf = buf, label = label, width = width(label .. "× ") }
+			local modified = vim.bo[buf].modified and options.modified_icon ~= "" and (" " .. options.modified_icon) or ""
+			local label = " " .. icon .. name .. modified .. " "
+			local close = options.close_icon ~= "" and (options.close_icon .. " ") or ""
+			result[#result + 1] = { buf = buf, label = label, width = width(label .. close) }
 		end
 	end
 	return result
@@ -270,7 +251,8 @@ function M.close(buf, _, button, _)
 end
 
 local function buffer_label(item, style, available)
-	local close = "× "
+	local icon = config.options.buffers.close_icon
+	local close = icon ~= "" and (icon .. " ") or ""
 	local label = item.label
 	if available then
 		-- Keep a close target when there is also room for a useful label.
@@ -281,7 +263,7 @@ local function buffer_label(item, style, available)
 	end
 	local result = "%#" .. style .. "#%" .. item.buf .. "@v:lua.SlimlineClick@" .. escape(label) .. "%T"
 	if close ~= "" then
-		result = result .. "%" .. item.buf .. "@v:lua.SlimlineClose@" .. close .. "%T"
+		result = result .. "%" .. item.buf .. "@v:lua.SlimlineClose@" .. escape(close) .. "%T"
 	end
 	return result
 end
@@ -312,26 +294,30 @@ local function buffer_section(items, active, available, selected)
 end
 
 function M.render()
+	local options = config.options
 	local current = vim.api.nvim_get_current_buf()
-	local mode = modes[vim.api.nvim_get_mode().mode] or "N"
+	local raw_mode = vim.api.nvim_get_mode().mode
+	local mode = modes[raw_mode] or "N"
+	local mode_label = options.mode.labels[raw_mode] or mode
 	local line, col = vim.fn.line("."), vim.fn.col(".")
 	local total = math.max(vim.fn.line("$"), 1)
 	local progress = math.floor(100 * line / total)
-	local right = " " .. line .. ":" .. col .. " | " .. progress .. "% "
-	local left = " " .. mode .. " "
-	local directory = git_directory()
-	local branch = directory and git[directory]
-	local git_label = branch and branch.label ~= "" and ("  " .. truncate(branch.label, 24)) or ""
+	local right = options.cursor.enabled and (" " .. line .. ":" .. col
+		.. (options.cursor.progress and (options.cursor.separator .. progress .. "%") or "") .. " ") or ""
+	local left = options.mode.enabled and (" " .. mode_label .. " ") or ""
+	local branch = git.label()
+	local git_label = branch ~= "" and (" " .. (options.git.icon ~= "" and (options.git.icon .. " ") or "")
+		.. truncate(branch, options.git.max_length)) or ""
 	local diagnostics = {}
 	local diagnostic_width = 0
 	for _, entry in ipairs({
-		{ severity = vim.diagnostic.severity.ERROR, symbol = "E!", style = "SlimlineError" },
-		{ severity = vim.diagnostic.severity.WARN, symbol = "W!", style = "SlimlineWarning" },
+		{ severity = vim.diagnostic.severity.ERROR, symbol = options.diagnostics.error, style = "SlimlineError" },
+		{ severity = vim.diagnostic.severity.WARN, symbol = options.diagnostics.warn, style = "SlimlineWarning" },
 	}) do
-		local count = #vim.diagnostic.get(current, { severity = entry.severity })
+		local count = options.diagnostics.enabled and #vim.diagnostic.get(current, { severity = entry.severity }) or 0
 		if count > 0 then
 			local label = " " .. entry.symbol .. " " .. count
-			diagnostics[#diagnostics + 1] = "%#" .. entry.style .. "#" .. label
+			diagnostics[#diagnostics + 1] = "%#" .. entry.style .. "#" .. escape(label)
 			diagnostic_width = diagnostic_width + width(label)
 		end
 	end
@@ -365,7 +351,8 @@ function M.render()
 		.. escape(right)
 end
 
-function M.setup()
+function M.setup(options)
+	config.setup(options)
 	_G.SlimlineClick = M.click
 	_G.SlimlineClose = M.close
 	_G.SlimlineRender = M.render
@@ -376,7 +363,7 @@ function M.setup()
 	vim.api.nvim_create_autocmd("ColorScheme", { group = augroup, callback = set_colors })
 	vim.api.nvim_create_autocmd({ "BufEnter", "BufFilePost", "DirChanged", "FocusGained", "TermLeave" }, {
 		group = augroup,
-		callback = refresh_git,
+		callback = git.refresh,
 	})
 	vim.api.nvim_create_autocmd("DiagnosticChanged", {
 		group = augroup,
@@ -385,7 +372,7 @@ function M.setup()
 		end,
 	})
 	set_colors()
-	refresh_git()
+	git.refresh()
 end
 
 return M

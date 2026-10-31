@@ -58,7 +58,51 @@ require("slimline").setup()
 
 Setup enables the global statusline (`laststatus=3`) and hides the tabline
 (`showtabline=0`). Disable other statusline/bufferline plugins to avoid conflicts.
-There are no configuration options yet.
+
+## Configuration
+
+Defaults below; pass only what you want to change in lazy.nvim's `opts` or
+`require("slimline").setup({...})`:
+
+```lua
+{
+  icons = true,
+  mode = {
+    enabled = true,
+    labels = {}, -- Neovim mode codes, e.g. { n = "NORMAL", i = "INSERT" }
+  },
+  buffers = {
+    enabled = true,
+    max_name_length = 20,
+    close_icon = "×", -- empty string hides the close button
+    modified_icon = "*",
+    exclude_filetypes = {}, -- e.g. { "qf", "help" }
+    exclude_buftypes = {}, -- e.g. { "terminal" }
+  },
+  diagnostics = { enabled = true, error = "E!", warn = "W!" },
+  git = { enabled = true, icon = "", max_length = 24 },
+  cursor = { enabled = true, separator = " | ", progress = true },
+  highlights = {},
+}
+```
+
+Duplicate filenames retain their distinguishing paths even when longer than
+`max_name_length`. Filters affect the buffer list only.
+
+Highlight overrides use Neovim highlight attributes and are reapplied after
+colorscheme changes:
+
+```lua
+highlights = {
+  SlimlineActive = { bold = false },
+  SlimlineGit = { fg = "#aabbcc" },
+}
+```
+
+Groups: `SlimlineBase`, `SlimlineText`, `SlimlineActive`, `SlimlineError`,
+`SlimlineWarning`, `SlimlineGit`, and `SlimlineModeNormal`, `SlimlineModeInsert`,
+`SlimlineModeVisual`, `SlimlineModeReplace`, `SlimlineModeCommand`,
+`SlimlineModeTerminal`.
 
 With true color enabled, highlights use `g:terminal_color_0` through
 `g:terminal_color_8`, falling back to `Normal` colors where undefined. Without
