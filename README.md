@@ -6,12 +6,12 @@ A small Neovim statusline combining a buffer list
 
 ## Features
 
-- Global statusline with clickable buffers and close buttons.
-- File icons, modified markers, and distinguishing paths for duplicate filenames.
+- Global statusline with tab styled buffer list
+- File icons
 - Git branch
 - Diagnostics
-- Cursor line and file progress.
-- Encoding 
+- Cursor line
+- File progress
 - Macro recording indicator
 
 ## Requirements
