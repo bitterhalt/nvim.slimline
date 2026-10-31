@@ -23,9 +23,8 @@ A small Neovim statusline combining a buffer list
 Optional plugins:
 
 - `nvim-tree/nvim-web-devicons` for file icons.
-- `famiu/bufdelete.nvim` for closing buffers without disrupting window layout.
-  Without it, Slimline uses Neovim's buffer deletion API. Neither path forces
-  deletion of unsaved changes.
+
+Buffers close using Neovim's built-in deletion API without forcing unsaved changes.
 
 ## Installation
 
@@ -39,7 +38,6 @@ Optional plugins:
   opts = {},
   dependencies = {
     "nvim-tree/nvim-web-devicons", -- optional
-    "famiu/bufdelete.nvim", -- optional
   },
 },
 ```

@@ -248,13 +248,7 @@ function M.close(buf, _, button, _)
 	if button ~= "l" or not vim.api.nvim_buf_is_valid(buf) then
 		return
 	end
-	local available, bufdelete = pcall(require, "bufdelete")
-	local ok, err
-	if available then
-		ok, err = pcall(bufdelete.bufdelete, buf, false)
-	else
-		ok, err = pcall(vim.api.nvim_buf_delete, buf, { force = false })
-	end
+	local ok, err = pcall(vim.api.nvim_buf_delete, buf, { force = false })
 	if not ok then
 		vim.notify(tostring(err), vim.log.levels.WARN, { title = "Slimline" })
 	end

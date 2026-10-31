@@ -50,19 +50,9 @@ vim.api.nvim_set_hl(0, "Normal", { fg = 0xffffff })
 vim.cmd("doautocmd ColorScheme")
 assert(vim.api.nvim_get_hl(0, { name = "SlimlineActive" }).bg == nil)
 
-local deleted
-package.loaded.bufdelete = {
-	bufdelete = function(buf, force)
-		deleted = buf
-		assert(force == false)
-	end,
-}
-slimline.close(first, 1, "r", "")
-assert(deleted == nil)
-slimline.close(first, 1, "l", "")
-assert(deleted == first)
-package.loaded.bufdelete = nil
 local disposable = vim.api.nvim_create_buf(true, false)
+slimline.close(disposable, 1, "r", "")
+assert(vim.api.nvim_buf_is_valid(disposable))
 slimline.close(disposable, 1, "l", "")
 assert(not vim.api.nvim_buf_is_valid(disposable))
 local namespace = vim.api.nvim_create_namespace("SlimlineTest")
