@@ -1,23 +1,18 @@
 # Slimline
 
-A small Neovim statusline combining a buffer list with mode, Git branch,
-diagnostics, and cursor position. Intended as a minimal replacement for
-bufferline and lualine.
+A small Neovim statusline combining a buffer list
 
 <img width="749" height="29" alt="image" src="https://github.com/user-attachments/assets/52e83d6f-7c4e-4d95-8034-7d03e95dc941" />
 
 ## Features
 
 - Global statusline with clickable buffers and close buttons.
-- Active buffer uses the editor background; inactive buffers are dimmed.
 - File icons, modified markers, and distinguishing paths for duplicate filenames.
-- Hidden-buffer counts and a width-aware buffer viewport.
-- Mode indicator using terminal palette colors.
-- Git branch or detached HEAD commit, checked asynchronously.
-- Current-buffer errors (`E!`) and warnings (`W!`), hidden when zero.
-- Cursor line, column, and file progress.
-- File encoding and a macro recording indicator (`REC @q`).
-- Colors refreshed when the colorscheme changes; transparent backgrounds supported.
+- Git branch
+- Diagnostics
+- Cursor line and file progress.
+- Encoding 
+- Macro recording indicator
 
 ## Requirements
 
