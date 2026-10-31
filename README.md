@@ -16,6 +16,7 @@ bufferline and lualine.
 - Git branch or detached HEAD commit, checked asynchronously.
 - Current-buffer errors (`E!`) and warnings (`W!`), hidden when zero.
 - Cursor line, column, and file progress.
+- File encoding and a macro recording indicator (`REC @q`).
 - Colors refreshed when the colorscheme changes; transparent backgrounds supported.
 
 ## Requirements
@@ -67,6 +68,8 @@ Defaults below; pass only what you want to change in lazy.nvim's `opts` or
 ```lua
 {
   icons = true,
+  encoding = { enabled = true },
+  recording = { icon = "REC" },
   mode = {
     enabled = true,
     labels = {}, -- Neovim mode codes, e.g. { n = "NORMAL", i = "INSERT" }
@@ -89,6 +92,9 @@ Defaults below; pass only what you want to change in lazy.nvim's `opts` or
 Duplicate filenames retain their distinguishing paths even when longer than
 `max_name_length`. Filters affect the buffer list only.
 
+`cursor.separator` is shared by all right-side sections. Recording is shown only
+while recording a macro; `recording.icon` customizes its label.
+
 Highlight overrides use Neovim highlight attributes and are reapplied after
 colorscheme changes:
 
@@ -100,7 +106,8 @@ highlights = {
 ```
 
 Groups: `SlimlineBase`, `SlimlineText`, `SlimlineActive`, `SlimlineError`,
-`SlimlineWarning`, `SlimlineGit`, and `SlimlineModeNormal`, `SlimlineModeInsert`,
+`SlimlineWarning`, `SlimlineGit`, `SlimlineRecording`, `SlimlineSingle`,
+and `SlimlineModeNormal`, `SlimlineModeInsert`,
 `SlimlineModeVisual`, `SlimlineModeReplace`, `SlimlineModeCommand`,
 `SlimlineModeTerminal`.
 

@@ -32,6 +32,7 @@ package.loaded["nvim-web-devicons"] = {
 }
 vim.bo[second].filetype = "lua"
 assert(slimline.render():find("L ", 1, true))
+assert(not slimline.render():find("D  ", 1, true))
 vim.g.terminal_color_6 = "#12abcd"
 vim.g.terminal_color_8 = "#667788"
 slimline.setup()
@@ -99,6 +100,10 @@ assert(vim.wait(1000, function()
 	return slimline.render():find(" @abc1234", 1, true) ~= nil
 end))
 vim.system = system
+vim.bo[second].modified = true
+assert(not slimline.render():find("%" .. second .. "@v:lua.SlimlineClose@", 1, true))
+vim.bo[second].modified = false
+assert(slimline.render():find("%" .. second .. "@v:lua.SlimlineClose@", 1, true))
 slimline.setup({
 	icons = false,
 	mode = { labels = { n = "NORMAL" } },
@@ -126,11 +131,28 @@ assert(rendered:find(" / ", 1, true), rendered)
 assert(rendered:find("@v:lua.SlimlineClose@× ", 1, true), rendered)
 slimline.setup({
 	mode = { enabled = false }, buffers = { enabled = false },
+	encoding = { enabled = false },
 	diagnostics = { enabled = false }, git = { enabled = false }, cursor = { enabled = false },
 })
 assert(vim.api.nvim_eval_statusline(slimline.render(), {}).str:match("^%s*$"))
 assert(not pcall(slimline.setup, { buffers = { max_name_length = 0 } }))
 assert(not pcall(slimline.setup, { git = false }))
 assert(not pcall(slimline.setup, { unknown = true }))
+slimline.setup({ git = { enabled = false } })
+vim.bo[second].fileencoding = "latin1"
+assert(slimline.render():find(" latin1", 1, true))
+vim.bo[second].fileencoding = ""
+assert(slimline.render():find(" " .. vim.o.encoding, 1, true))
+local displayed = vim.api.nvim_eval_statusline(slimline.render(), {}).str
+assert(displayed:find("E! 1 | " .. vim.o.encoding .. " | ", 1, true), displayed)
+local reg_recording = vim.fn.reg_recording
+vim.fn.reg_recording = function()
+	return "q"
+end
+assert(slimline.render():find("%#SlimlineRecording# REC @q ", 1, true))
+slimline.setup({ recording = { icon = "●" }, encoding = { enabled = false }, git = { enabled = false } })
+assert(slimline.render():find("● @q", 1, true))
+assert(not slimline.render():find("utf-8", 1, true))
+vim.fn.reg_recording = reg_recording
 print("Slimline regression tests passed")
 vim.cmd("qa!")

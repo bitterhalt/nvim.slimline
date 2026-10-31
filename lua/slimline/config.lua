@@ -3,6 +3,8 @@ local M = {}
 M.defaults = {
 	icons = true,
 	mode = { enabled = true, labels = {} },
+	recording = { icon = "REC" },
+	encoding = { enabled = true },
 	buffers = {
 		enabled = true,
 		max_name_length = 20,

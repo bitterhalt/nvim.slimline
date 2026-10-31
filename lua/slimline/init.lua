@@ -52,10 +52,17 @@ local function set_colors()
 	local muted = terminal_color(8, fg)
 	vim.api.nvim_set_hl(0, "SlimlineBase", { bg = bg, fg = muted, ctermfg = 8 })
 	vim.api.nvim_set_hl(0, "SlimlineText", { bg = bg, fg = fg, ctermfg = 7 })
-	vim.api.nvim_set_hl(0, "SlimlineActive", { bg = bg, fg = fg, ctermfg = 7, bold = true })
+	vim.api.nvim_set_hl(0, "SlimlineActive", {
+		bg = bg,
+		fg = terminal_color(6, fg),
+		ctermfg = 6,
+		bold = true,
+	})
+	vim.api.nvim_set_hl(0, "SlimlineSingle", { bg = bg, fg = fg, ctermfg = 7, bold = true })
 	vim.api.nvim_set_hl(0, "SlimlineError", { bg = bg, fg = terminal_color(1, fg), ctermfg = 1 })
 	vim.api.nvim_set_hl(0, "SlimlineWarning", { bg = bg, fg = terminal_color(3, fg), ctermfg = 3 })
 	vim.api.nvim_set_hl(0, "SlimlineGit", { bg = bg, fg = terminal_color(6, fg), ctermfg = 6 })
+	vim.api.nvim_set_hl(0, "SlimlineRecording", { bg = bg, fg = terminal_color(1, fg), ctermfg = 1, bold = true })
 	local colors = {
 		Normal = 6,
 		Insert = 2,
@@ -130,12 +137,9 @@ local function icon_for(name, ft)
 	end
 	local icon = devicons.get_icon(name, nil, { default = false })
 	if not icon and ft and ft ~= "" then
-		icon = devicons.get_icon_by_filetype(ft, { default = true })
+		icon = devicons.get_icon_by_filetype(ft, { default = false })
 	end
-	if not icon then
-		icon = devicons.get_icon(name, nil, { default = true })
-	end
-	return icon and (icon .. " ") or ""
+	return icon and (icon .. "  ") or ""
 end
 
 local function buffers()
@@ -171,8 +175,8 @@ local function buffers()
 			end
 			local modified = vim.bo[buf].modified and options.modified_icon ~= "" and (" " .. options.modified_icon) or ""
 			local label = " " .. icon .. name .. modified .. " "
-			local close = options.close_icon ~= "" and (options.close_icon .. " ") or ""
-			result[#result + 1] = { buf = buf, label = label, width = width(label .. close) }
+			local close = not vim.bo[buf].modified and options.close_icon ~= "" and (options.close_icon .. " ") or ""
+			result[#result + 1] = { buf = buf, label = label, close = close, width = width(label .. close) }
 		end
 	end
 	return result
@@ -251,8 +255,7 @@ function M.close(buf, _, button, _)
 end
 
 local function buffer_label(item, style, available)
-	local icon = config.options.buffers.close_icon
-	local close = icon ~= "" and (icon .. " ") or ""
+	local close = item.close
 	local label = item.label
 	if available then
 		-- Keep a close target when there is also room for a useful label.
@@ -269,13 +272,14 @@ local function buffer_label(item, style, available)
 end
 
 local function buffer_section(items, active, available, selected)
+	local active_style = #items == 1 and "SlimlineSingle" or "SlimlineActive"
 	local first, last = visible_range(items, active, available)
 	if not first then
 		local item = items[active]
 		if not item or available <= 0 then
 			return ""
 		end
-		local style = selected == active and "SlimlineActive" or "SlimlineBase"
+		local style = selected == active and active_style or "SlimlineBase"
 		return buffer_label(item, style, available)
 	end
 	local parts = {}
@@ -284,7 +288,7 @@ local function buffer_section(items, active, available, selected)
 	end
 	for i = first, last do
 		local item = items[i]
-		local style = (i == selected) and "SlimlineActive" or "SlimlineBase"
+		local style = (i == selected) and active_style or "SlimlineBase"
 		parts[#parts + 1] = buffer_label(item, style)
 	end
 	if last < #items then
@@ -305,11 +309,22 @@ function M.render()
 	local right = options.cursor.enabled and (" " .. line .. ":" .. col
 		.. (options.cursor.progress and (options.cursor.separator .. progress .. "%") or "") .. " ") or ""
 	local left = options.mode.enabled and (" " .. mode_label .. " ") or ""
+	local register = vim.fn.reg_recording()
+	local recording = register ~= "" and (" " .. options.recording.icon .. " @" .. register .. " ") or ""
+	local encoding = options.encoding.enabled and (" " .. (vim.bo[current].fileencoding ~= ""
+		and vim.bo[current].fileencoding or vim.o.encoding)) or ""
 	local branch = git.label()
 	local git_label = branch ~= "" and (" " .. (options.git.icon ~= "" and (options.git.icon .. " ") or "")
 		.. truncate(branch, options.git.max_length)) or ""
-	local diagnostics = {}
-	local diagnostic_width = 0
+	local sections = {}
+	local right_width = 0
+	local function section(label, style)
+		if label ~= "" then
+			sections[#sections + 1] = "%#" .. style .. "#" .. escape(label)
+			right_width = right_width + width(label)
+		end
+	end
+	section(git_label, "SlimlineGit")
 	for _, entry in ipairs({
 		{ severity = vim.diagnostic.severity.ERROR, symbol = options.diagnostics.error, style = "SlimlineError" },
 		{ severity = vim.diagnostic.severity.WARN, symbol = options.diagnostics.warn, style = "SlimlineWarning" },
@@ -317,10 +332,15 @@ function M.render()
 		local count = options.diagnostics.enabled and #vim.diagnostic.get(current, { severity = entry.severity }) or 0
 		if count > 0 then
 			local label = " " .. entry.symbol .. " " .. count
-			diagnostics[#diagnostics + 1] = "%#" .. entry.style .. "#" .. escape(label)
-			diagnostic_width = diagnostic_width + width(label)
+			section(label, entry.style)
 		end
 	end
+	section(encoding, "SlimlineText")
+	section(right, "SlimlineText")
+	-- Labels already include leading padding; use one shared separator everywhere.
+	local separator = options.cursor.separator:gsub("%s$", "")
+	right_width = right_width + math.max(#sections - 1, 0) * width(separator)
+	local right_section = table.concat(sections, "%#SlimlineBase#" .. escape(separator))
 	local items = buffers()
 	local active
 	for i, item in ipairs(items) do
@@ -336,19 +356,17 @@ function M.render()
 		active = 0
 	end
 	-- Global statusline uses the editor's full width, not just the active split.
-	local available = vim.o.columns - width(left) - width(right) - width(git_label) - diagnostic_width - 2
+	local available = vim.o.columns - width(left) - width(recording) - right_width - 2
 	return "%#"
 		.. mode_style(mode)
 		.. "#"
 		.. escape(left)
+		.. "%#SlimlineRecording#"
+		.. escape(recording)
 		.. "%#SlimlineBase# "
 		.. buffer_section(items, anchor, available, active)
-		.. "%="
-		.. "%#SlimlineGit#"
-		.. escape(git_label)
-		.. table.concat(diagnostics)
-		.. "%#SlimlineText#"
-		.. escape(right)
+		.. "%#SlimlineBase#%="
+		.. right_section
 end
 
 function M.setup(options)
@@ -369,6 +387,15 @@ function M.setup(options)
 		group = augroup,
 		callback = function()
 			vim.cmd("redrawstatus")
+		end,
+	})
+	vim.api.nvim_create_autocmd({ "RecordingEnter", "RecordingLeave" }, {
+		group = augroup,
+		callback = function()
+			-- RecordingLeave fires before reg_recording() has been cleared.
+			vim.schedule(function()
+				vim.cmd("redrawstatus")
+			end)
 		end,
 	})
 	set_colors()
