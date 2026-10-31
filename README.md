@@ -4,6 +4,8 @@ A small Neovim statusline combining a buffer list with mode, Git branch,
 diagnostics, and cursor position. Intended as a minimal replacement for
 bufferline and lualine.
 
+<img width="749" height="29" alt="image" src="https://github.com/user-attachments/assets/52e83d6f-7c4e-4d95-8034-7d03e95dc941" />
+
 ## Features
 
 - Global statusline with clickable buffers and close buttons.
