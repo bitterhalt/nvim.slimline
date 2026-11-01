@@ -12,6 +12,7 @@ A small Neovim statusline combining a buffer list
 - Diagnostics
 - Cursor line
 - File progress
+- Pin buffers
 - Macro recording indicator
 
 ## Requirements
@@ -83,17 +84,6 @@ Defaults below; pass only what you want to change in lazy.nvim's `opts` or
 }
 ```
 
-Duplicate filenames include distinguishing paths, truncated when necessary to
-fit their slot. Filters affect the buffer list only. `min_width` controls how
-wide each fixed buffer slot is, independently of filename length; very narrow windows can
-shrink the active slot below this minimum.
-
-`cursor.separator` is shared by all right-side sections. Recording is shown only
-while recording a macro; `recording.icon` customizes its label.
-
-Highlight overrides use Neovim highlight attributes and are reapplied after
-colorscheme changes:
-
 ```lua
 highlights = {
   SlimlineActive = { bold = false },
@@ -108,10 +98,22 @@ and `SlimlineModeNormal`, `SlimlineModeInsert`,
 `SlimlineModeVisual`, `SlimlineModeReplace`, `SlimlineModeCommand`,
 `SlimlineModeTerminal`.
 
-Diagnostics use fixed red (`#ff5555`) and yellow (`#f1c40f`) colors; file icons
-use devicons colors. Other highlights use `g:terminal_color_0` through
-`g:terminal_color_8`, falling back to `Normal` colors where undefined. Without
-true color, highlights use ANSI palette indexes directly.
+## Pinning
+
+Pinned buffers stay in a separate left-hand area and show a red `` matching the
+error color. Unpinned buffers scroll independently. If pins exceed the available
+width, the pinned area shows its own overflow counts.
+Pins are buffer-local and last for the current session. Filtering still
+applies; cycling wraps through visible-list eligible pinned buffers.
+
+Example lazy.nvim bindings:
+
+```lua
+keys = {
+  { "<leader>bp", function() require("slimline").toggle_pin() end, desc = "Toggle buffer pin" },
+  { "<leader>bn", function() require("slimline").next_pin() end, desc = "Next pinned buffer" },
+},
+```
 
 ## Tests
 

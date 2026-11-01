@@ -88,6 +88,7 @@ local function set_colors()
 		local value = override.link and override or vim.tbl_extend("force", group(name), override)
 		vim.api.nvim_set_hl(0, name, value)
 	end
+	vim.api.nvim_set_hl(0, "SlimlinePin", { link = "SlimlineError" })
 end
 
 local function mode_style(mode)
@@ -180,7 +181,8 @@ local function buffers()
 			end
 			local modified = vim.bo[buf].modified and options.modified_icon ~= "" and (" " .. options.modified_icon)
 				or ""
-			local label = " " .. icon .. name .. modified .. " "
+			local pin = vim.b[buf].slimline_pinned and "  " or ""
+			local label = " " .. pin .. icon .. name .. modified .. " "
 			local close = buf ~= vim.api.nvim_get_current_buf()
 					and not vim.bo[buf].modified
 					and options.close_icon ~= ""
@@ -189,7 +191,8 @@ local function buffers()
 			result[#result + 1] = {
 				buf = buf,
 				label = label,
-				name = " " .. icon .. name,
+				name = " " .. pin .. icon .. name,
+				pin = pin,
 				modified = modified,
 				close = close,
 				icon = icon,
@@ -197,7 +200,41 @@ local function buffers()
 			}
 		end
 	end
+	table.sort(result, function(a, b)
+		if (a.pin ~= "") ~= (b.pin ~= "") then
+			return a.pin ~= ""
+		end
+		return a.buf < b.buf
+	end)
 	return result
+end
+
+function M.toggle_pin()
+	local current = vim.api.nvim_get_current_buf()
+	for _, item in ipairs(buffers()) do
+		if item.buf == current then
+			vim.b[current].slimline_pinned = not vim.b[current].slimline_pinned
+			vim.cmd("redrawstatus")
+			return
+		end
+	end
+end
+
+function M.next_pin()
+	local pinned = {}
+	local current = vim.api.nvim_get_current_buf()
+	local index = 0
+	for _, item in ipairs(buffers()) do
+		if item.pin ~= "" then
+			pinned[#pinned + 1] = item.buf
+			if item.buf == current then
+				index = #pinned
+			end
+		end
+	end
+	if #pinned > 0 then
+		vim.api.nvim_set_current_buf(pinned[index % #pinned + 1])
+	end
 end
 
 -- Capacity depends on a stable slot width, never on individual filenames.
@@ -237,9 +274,16 @@ function M.close(buf, _, button, _)
 end
 
 local function colored_name(text, item, style)
-	local prefix = " " .. item.icon
+	local result = ""
+	local prefix = " " .. item.pin
+	local pinned = item.pin ~= "" and text:sub(1, #prefix) == prefix
+	if pinned then
+		result = "%#SlimlinePin#" .. escape(prefix) .. "%#" .. style .. "#"
+		text = text:sub(#prefix + 1)
+	end
+	prefix = (pinned and "" or " ") .. item.icon
 	if item.icon == "" or not item.icon_highlight or text:sub(1, #prefix) ~= prefix then
-		return escape(text)
+		return result .. escape(text)
 	end
 	local key = item.icon_highlight .. style
 	local highlight = icon_highlights[key]
@@ -254,7 +298,7 @@ local function colored_name(text, item, style)
 		})
 		icon_highlights[key] = highlight
 	end
-	return " " .. "%#" .. highlight .. "#" .. escape(item.icon) .. "%#" .. style .. "#" .. escape(text:sub(#prefix + 1))
+	return result .. (pinned and "" or " ") .. "%#" .. highlight .. "#" .. escape(item.icon) .. "%#" .. style .. "#" .. escape(text:sub(#prefix + 1))
 end
 
 local function buffer_label(item, style, available)
@@ -298,8 +342,8 @@ local function buffer_label(item, style, available)
 	return result
 end
 
-local function buffer_section(items, active, available, selected)
-	local active_style = #items == 1 and "SlimlineSingle" or "SlimlineActive"
+local function buffer_viewport(items, active, available, selected, active_style)
+	active_style = active_style or (#items == 1 and "SlimlineSingle" or "SlimlineActive")
 	local first, last, space, left, right = visible_range(items, active, available)
 	if not first then
 		local item = items[active]
@@ -323,6 +367,34 @@ local function buffer_section(items, active, available, selected)
 		parts[#parts + 1] = "%#SlimlineBase#" .. escape(right)
 	end
 	return table.concat(parts)
+end
+
+local function buffer_section(items, active, available, selected)
+	local pinned_count = 0
+	for _, item in ipairs(items) do
+		if item.pin == "" then
+			break
+		end
+		pinned_count = pinned_count + 1
+	end
+	if pinned_count == 0 or pinned_count == #items or available <= 0 then
+		return buffer_viewport(items, active, available, selected)
+	end
+	local pinned, regular = {}, {}
+	for i, item in ipairs(items) do
+		local target = i <= pinned_count and pinned or regular
+		target[#target + 1] = item
+	end
+	local slot = config.options.buffers.min_width
+	-- Keep room for an ordinary slot and its overflow markers. If pins alone
+	-- exceed the remaining space, their own viewport handles that overflow.
+	local reserve = math.min(slot + 10, math.floor(available / 2))
+	local pin_space = math.min(pinned_count * slot, available - reserve)
+	local pin_selected = selected <= pinned_count and selected or 0
+	local regular_selected = selected > pinned_count and selected - pinned_count or 0
+	return buffer_viewport(pinned, math.max(1, pin_selected), pin_space, pin_selected, "SlimlineActive")
+		.. buffer_viewport(regular, math.max(1, regular_selected), available - pin_space,
+			regular_selected, "SlimlineActive")
 end
 
 function M.render()
