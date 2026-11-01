@@ -15,7 +15,8 @@ A small Neovim statusline combining a buffer list
 - Pin buffers
 - Macro recording indicator
 
-## Requirements
+<details>
+<summary>Requirements</summary>
 
 - Neovim 0.10 or newer.
 - Git for branch information (optional).
@@ -26,6 +27,8 @@ Optional plugins:
 - `nvim-tree/nvim-web-devicons` for colored file icons.
 
 Buffers close using Neovim's built-in deletion API without forcing unsaved changes.
+
+</details>
 
 ## Installation
 
@@ -50,9 +53,6 @@ Add this repository to Neovim's runtime path with your plugin manager, then call
 ```lua
 require("slimline").setup()
 ```
-
-Setup enables the global statusline (`laststatus=3`) and hides the tabline
-(`showtabline=0`). Disable other statusline/bufferline plugins to avoid conflicts.
 
 ## Configuration
 
@@ -91,20 +91,116 @@ highlights = {
 }
 ```
 
-Groups: `SlimlineBase`, `SlimlineText`, `SlimlineActive`, `SlimlineClose`,
-`SlimlineModified`, `SlimlineError`,
-`SlimlineWarning`, `SlimlineGit`, `SlimlineRecording`, `SlimlineSingle`,
-and `SlimlineModeNormal`, `SlimlineModeInsert`,
-`SlimlineModeVisual`, `SlimlineModeReplace`, `SlimlineModeCommand`,
-`SlimlineModeTerminal`.
+<details>
+<summary>Setup and configuration behavior</summary>
 
-## Pinning
+- Setup enables the global statusline (`laststatus=3`) and hides the tabline
+  (`showtabline=0`). Other statusline/bufferline plugins can overwrite these settings.
+- Options are merged with defaults. Each `setup()` call starts from defaults,
+  not the previous configuration.
+- Component tables use `enabled = false` to hide their section. Recording has
+  no toggle: it appears only while recording a macro.
+- `mode.labels` maps Neovim mode codes, not the displayed labels. See `:help mode()`.
+- `cursor.separator` is shared by all right-side sections; hidden sections do
+  not leave dangling separators.
+
+</details>
+
+<details>
+<summary>Buffer layout, icons, and closing</summary>
+
+- The list contains listed buffers, not Neovim tab pages.
+- `buffers.min_width` sets a fixed slot width in display columns. Despite its
+  name, slots do not stretch to fill free space. Very narrow windows can shrink
+  a slot below this width.
+- `max_name_length` follows `min_width` unless explicitly set. Icons, padding,
+  and markers also occupy the slot, so the visible name may be shorter.
+- Duplicate filenames include distinguishing paths; unnamed buffers receive
+  buffer numbers when needed. Labels are truncated to fit their slots.
+- Hidden-buffer counts appear on either side of the viewport. The current
+  listed buffer stays in view when space permits.
+- The active buffer is bold cyan, or bold white when it is the only entry.
+  Inactive buffers are dimmed. Special/unlisted buffers do not select an entry.
+- File icons use devicons colors. Unknown files have no placeholder icon.
+  `icons = false` disables file icons, not the Git or pin symbols.
+- Left-click a label to switch buffers. Close buttons appear only on unmodified,
+  inactive buffers. Modified buffers show the modified marker, green when focused.
+- Closing uses Neovim's native deletion API without forcing unsaved changes;
+  deleting a buffer displayed in a split can affect the window layout.
+- Empty `close_icon` or `modified_icon` strings hide the respective marker.
+- `exclude_filetypes` and `exclude_buftypes` filter only the list; they do not
+  close buffers or disable diagnostics for the current buffer.
+
+</details>
+
+<details>
+<summary>Git, diagnostics, encoding, and recording</summary>
+
+- Git shows the current file's branch, or `@` plus a short commit hash for
+  detached HEAD. Unnamed buffers use the working directory. It is hidden outside
+  repositories and in special buffers.
+- Git checks are asynchronous and cached, not run during statusline rendering.
+  They refresh on buffer entry/name changes, directory changes, focus gain, and
+  leaving terminal mode.
+- Diagnostics show error and warning counts for the current buffer, hidden at
+  zero. Hints and informational diagnostics are omitted. Slimline displays
+  diagnostics supplied through Neovim; it does not configure an LSP or linter.
+- Encoding uses the current buffer's `fileencoding`, falling back to Neovim's
+  `encoding` when empty.
+- Macro recording shows `REC @q` beside the mode while recording into register
+  `q`. `recording.icon` changes the label; playback does not show this indicator.
+
+</details>
+
+<details>
+<summary>Colors and highlight groups</summary>
+
+Most highlights use `g:terminal_color_0` through `g:terminal_color_8` in true-color
+mode, falling back to `Normal` colors when undefined. Without true color they
+use terminal palette indexes. Transparent `Normal` backgrounds are preserved.
+
+Diagnostics use fixed red (`#cc241d`) and yellow (`#d79921`); pins link to the
+error highlight. File icons use devicons colors. Colors and configured highlight
+overrides are reapplied after colorscheme changes.
+
+The `highlights` table accepts Neovim highlight attributes (see `:help nvim_set_hl()`).
+Overrides merge with each group's defaults; a `link` replaces the group's attributes.
+
+| Group | Purpose |
+| --- | --- |
+| `SlimlineBase` | Inactive buffers, filler, and separators |
+| `SlimlineText` | Encoding and cursor information |
+| `SlimlineActive` | Active buffer with multiple entries |
+| `SlimlineSingle` | Active buffer when there is only one entry |
+| `SlimlineModified` | Focused buffer's modified marker |
+| `SlimlineClose` | Close-button highlight (currently hidden on focused buffers) |
+| `SlimlineError` | Error diagnostics and linked pin color |
+| `SlimlineWarning` | Warning diagnostics |
+| `SlimlineGit` | Git branch or commit |
+| `SlimlineRecording` | Macro recording indicator |
+| `SlimlinePin` | Pin symbol; links to `SlimlineError` |
+| `SlimlineModeNormal` | Normal mode |
+| `SlimlineModeInsert` | Insert mode |
+| `SlimlineModeVisual` | Visual and select modes |
+| `SlimlineModeReplace` | Replace mode |
+| `SlimlineModeCommand` | Command mode |
+| `SlimlineModeTerminal` | Terminal mode |
+
+Change `SlimlineError` to customize pin color; the pin link is restored by setup
+and colorscheme refreshes. File-icon highlight groups are generated internally.
+
+</details>
+
+<details>
+<summary>Pinning and keybindings</summary>
 
 Pinned buffers stay in a separate left-hand area and show a red `` matching the
 error color. Unpinned buffers scroll independently. If pins exceed the available
 width, the pinned area shows its own overflow counts.
 Pins are buffer-local and last for the current session. Filtering still
-applies; cycling wraps through visible-list eligible pinned buffers.
+applies; cycling wraps through eligible pinned buffers, including ones hidden by
+overflow. New pins sort with the other pinned buffers in buffer-number order.
+Pinning does not protect a buffer from deletion. No keybindings are installed by default.
 
 Example lazy.nvim bindings:
 
@@ -115,10 +211,22 @@ keys = {
 },
 ```
 
-## Tests
+</details>
+
+<details>
+<summary>Tests</summary>
 
 From the repository root:
 
 ```sh
 nvim --headless -u NONE -l tests/slimline.lua
 ```
+
+</details>
+
+<details>
+<summary>License</summary>
+
+[MIT](LICENSE), copyright 2026 bitterhalt.
+
+</details>
