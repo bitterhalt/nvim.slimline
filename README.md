@@ -108,7 +108,8 @@ and `SlimlineModeNormal`, `SlimlineModeInsert`,
 `SlimlineModeVisual`, `SlimlineModeReplace`, `SlimlineModeCommand`,
 `SlimlineModeTerminal`.
 
-With true color enabled, highlights use `g:terminal_color_0` through
+Diagnostics use fixed red (`#ff5555`) and yellow (`#f1c40f`) colors; file icons
+use devicons colors. Other highlights use `g:terminal_color_0` through
 `g:terminal_color_8`, falling back to `Normal` colors where undefined. Without
 true color, highlights use ANSI palette indexes directly.
 

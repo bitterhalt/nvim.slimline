@@ -63,8 +63,8 @@ local function set_colors()
 	vim.api.nvim_set_hl(0, "SlimlineSingle", { bg = bg, fg = fg, ctermfg = 7, bold = true })
 	vim.api.nvim_set_hl(0, "SlimlineClose", { bg = bg, fg = fg, ctermfg = 7 })
 	vim.api.nvim_set_hl(0, "SlimlineModified", { bg = bg, fg = terminal_color(2, fg), ctermfg = 2, bold = true })
-	vim.api.nvim_set_hl(0, "SlimlineError", { bg = bg, fg = terminal_color(1, fg), ctermfg = 1 })
-	vim.api.nvim_set_hl(0, "SlimlineWarning", { bg = bg, fg = terminal_color(3, fg), ctermfg = 3 })
+	vim.api.nvim_set_hl(0, "SlimlineError", { bg = bg, fg = "#cc241d", ctermfg = 196 })
+	vim.api.nvim_set_hl(0, "SlimlineWarning", { bg = bg, fg = "#d79921", ctermfg = 220 })
 	vim.api.nvim_set_hl(0, "SlimlineGit", { bg = bg, fg = terminal_color(6, fg), ctermfg = 6 })
 	vim.api.nvim_set_hl(0, "SlimlineRecording", { bg = bg, fg = terminal_color(1, fg), ctermfg = 1, bold = true })
 	local colors = {
@@ -153,7 +153,8 @@ local function buffers()
 		return result
 	end
 	local function included(buf)
-		return vim.api.nvim_buf_is_valid(buf) and vim.bo[buf].buflisted
+		return vim.api.nvim_buf_is_valid(buf)
+			and vim.bo[buf].buflisted
 			and not vim.tbl_contains(options.exclude_filetypes, vim.bo[buf].filetype)
 			and not vim.tbl_contains(options.exclude_buftypes, vim.bo[buf].buftype)
 	end
@@ -177,14 +178,22 @@ local function buffers()
 			else
 				name = truncate(name, options.max_name_length)
 			end
-			local modified = vim.bo[buf].modified and options.modified_icon ~= "" and (" " .. options.modified_icon) or ""
+			local modified = vim.bo[buf].modified and options.modified_icon ~= "" and (" " .. options.modified_icon)
+				or ""
 			local label = " " .. icon .. name .. modified .. " "
-			local close = buf ~= vim.api.nvim_get_current_buf() and not vim.bo[buf].modified
-				and options.close_icon ~= "" and (options.close_icon .. " ") or ""
+			local close = buf ~= vim.api.nvim_get_current_buf()
+					and not vim.bo[buf].modified
+					and options.close_icon ~= ""
+					and (options.close_icon .. " ")
+				or ""
 			result[#result + 1] = {
-				buf = buf, label = label, name = " " .. icon .. name, modified = modified,
+				buf = buf,
+				label = label,
+				name = " " .. icon .. name,
+				modified = modified,
 				close = close,
-				icon = icon, icon_highlight = icon_highlight,
+				icon = icon,
+				icon_highlight = icon_highlight,
 			}
 		end
 	end
@@ -245,8 +254,7 @@ local function colored_name(text, item, style)
 		})
 		icon_highlights[key] = highlight
 	end
-	return " " .. "%#" .. highlight .. "#" .. escape(item.icon)
-		.. "%#" .. style .. "#" .. escape(text:sub(#prefix + 1))
+	return " " .. "%#" .. highlight .. "#" .. escape(item.icon) .. "%#" .. style .. "#" .. escape(text:sub(#prefix + 1))
 end
 
 local function buffer_label(item, style, available)
@@ -278,8 +286,14 @@ local function buffer_label(item, style, available)
 	end
 	local result = "%#" .. style .. "#%" .. item.buf .. "@v:lua.SlimlineClick@" .. text .. "%T"
 	if close ~= "" then
-		result = result .. "%#" .. (focused and "SlimlineClose" or "SlimlineBase") .. "#%"
-			.. item.buf .. "@v:lua.SlimlineClose@" .. escape(close) .. "%T"
+		result = result
+			.. "%#"
+			.. (focused and "SlimlineClose" or "SlimlineBase")
+			.. "#%"
+			.. item.buf
+			.. "@v:lua.SlimlineClose@"
+			.. escape(close)
+			.. "%T"
 	end
 	return result
 end
@@ -320,16 +334,22 @@ function M.render()
 	local line, col = vim.fn.line("."), vim.fn.col(".")
 	local total = math.max(vim.fn.line("$"), 1)
 	local progress = math.floor(100 * line / total)
-	local right = options.cursor.enabled and (" " .. line .. ":" .. col
-		.. (options.cursor.progress and (options.cursor.separator .. progress .. "%") or "") .. " ") or ""
+	local right = options.cursor.enabled
+			and (" " .. line .. ":" .. col .. (options.cursor.progress and (options.cursor.separator .. progress .. "%") or "") .. " ")
+		or ""
 	local left = options.mode.enabled and (" " .. mode_label .. " ") or ""
 	local register = vim.fn.reg_recording()
 	local recording = register ~= "" and (" " .. options.recording.icon .. " @" .. register .. " ") or ""
-	local encoding = options.encoding.enabled and (" " .. (vim.bo[current].fileencoding ~= ""
-		and vim.bo[current].fileencoding or vim.o.encoding)) or ""
+	local encoding = options.encoding.enabled
+			and (" " .. (vim.bo[current].fileencoding ~= "" and vim.bo[current].fileencoding or vim.o.encoding))
+		or ""
 	local branch = git.label()
-	local git_label = branch ~= "" and (" " .. (options.git.icon ~= "" and (options.git.icon .. " ") or "")
-		.. truncate(branch, options.git.max_length)) or ""
+	local git_label = branch ~= ""
+			and (" " .. (options.git.icon ~= "" and (options.git.icon .. " ") or "") .. truncate(
+				branch,
+				options.git.max_length
+			))
+		or ""
 	local sections = {}
 	local right_width = 0
 	local function section(label, style)
