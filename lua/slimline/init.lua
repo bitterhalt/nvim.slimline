@@ -181,61 +181,31 @@ local function buffers()
 				and options.close_icon ~= "" and (options.close_icon .. " ") or ""
 			result[#result + 1] = {
 				buf = buf, label = label, name = " " .. icon .. name, modified = modified,
-				close = close, width = width(label .. close),
+				close = close,
 			}
 		end
 	end
 	return result
 end
 
--- Find the largest contiguous buffer viewport that contains the current buffer.
--- Reserve width for the number of hidden buffers on either side.
+-- Capacity depends on a stable slot width, never on individual filenames.
 local function visible_range(items, active, space)
 	local n = #items
 	if n == 0 or space <= 0 then
 		return nil
 	end
 
-	local prefix = { [0] = 0 }
-	for i = 1, n do
-		prefix[i] = prefix[i - 1] + items[i].width
-	end
-
-	local function marker_width(first, last)
-		local w = 0
-		if first > 1 then
-			w = w + width(" <" .. (first - 1) .. " ")
-		end
-		if last < n then
-			w = w + width(" " .. (n - last) .. "> ")
-		end
-		return w
-	end
-
-	local best_first, best_last, best_count = nil, nil, 0
-	local best_distance = math.huge
-
-	-- Moving the start right can only free space, so the end never moves back.
-	local last = active - 1
-	for first = 1, active do
-		while last < n do
-			local candidate = last + 1
-			local used = prefix[candidate] - prefix[first - 1] + marker_width(first, candidate)
-			if used > space then
-				break
-			end
-			last = candidate
-		end
-		if last >= active then
-			local count = last - first + 1
-			local distance = math.abs((first + last) / 2 - active)
-			if count > best_count or (count == best_count and distance < best_distance) then
-				best_first, best_last, best_count, best_distance = first, last, count, distance
-			end
+	local minimum = config.options.buffers.min_width
+	for count = math.min(n, math.max(1, math.floor(space / minimum))), 1, -1 do
+		local first = math.max(1, math.min(active - math.floor((count - 1) / 2), n - count + 1))
+		local last = first + count - 1
+		local left = first > 1 and (" <" .. (first - 1) .. " ") or ""
+		local right = last < n and (" " .. (n - last) .. "> ") or ""
+		local available = space - width(left) - width(right)
+		if available >= count * minimum or (count == 1 and available >= 1) then
+			return first, last, available, left, right
 		end
 	end
-
-	return best_first, best_last
 end
 
 function M.click(buf, _, button, _)
@@ -259,16 +229,27 @@ local function buffer_label(item, style, available)
 	local label = item.label
 	local focused = style == "SlimlineActive" or style == "SlimlineSingle"
 	local modified = item.modified
+	local name = item.name
 	if available then
 		-- Keep a close target when there is also room for a useful label.
 		if available < width(close) + 2 then
 			close = ""
 		end
-		label = truncate(label, available - width(close))
+		if modified ~= "" and available - width(close) > width(modified) + 1 then
+			name = truncate(name, available - width(close) - width(modified) - 1)
+			label = name .. modified .. " "
+		else
+			local budget = available - width(close)
+			label = budget > 1 and (truncate(item.name, budget - 1) .. " ") or truncate(label, budget)
+			modified = ""
+		end
 	end
 	local text = escape(label)
-	if focused and modified ~= "" and (not available or width(item.label) <= available - width(close)) then
-		text = escape(item.name) .. "%#SlimlineModified#" .. escape(modified) .. "%#" .. style .. "# "
+	if focused and modified ~= "" then
+		text = escape(name) .. "%#SlimlineModified#" .. escape(modified) .. "%#" .. style .. "# "
+	end
+	if available then
+		text = text .. string.rep(" ", math.max(0, available - width(label) - width(close)))
 	end
 	local result = "%#" .. style .. "#%" .. item.buf .. "@v:lua.SlimlineClick@" .. text .. "%T"
 	if close ~= "" then
@@ -280,7 +261,7 @@ end
 
 local function buffer_section(items, active, available, selected)
 	local active_style = #items == 1 and "SlimlineSingle" or "SlimlineActive"
-	local first, last = visible_range(items, active, available)
+	local first, last, space, left, right = visible_range(items, active, available)
 	if not first then
 		local item = items[active]
 		if not item or available <= 0 then
@@ -291,15 +272,16 @@ local function buffer_section(items, active, available, selected)
 	end
 	local parts = {}
 	if first > 1 then
-		parts[#parts + 1] = "%#SlimlineBase#" .. escape(" <" .. (first - 1) .. " ")
+		parts[#parts + 1] = "%#SlimlineBase#" .. escape(left)
 	end
+	local slot = math.min(config.options.buffers.min_width, space)
 	for i = first, last do
 		local item = items[i]
 		local style = (i == selected) and active_style or "SlimlineBase"
-		parts[#parts + 1] = buffer_label(item, style)
+		parts[#parts + 1] = buffer_label(item, style, slot)
 	end
 	if last < #items then
-		parts[#parts + 1] = "%#SlimlineBase#" .. escape(" " .. (#items - last) .. "> ")
+		parts[#parts + 1] = "%#SlimlineBase#" .. escape(right)
 	end
 	return table.concat(parts)
 end

@@ -1,14 +1,15 @@
 -- Run from the repository root: nvim --headless -u NONE -l tests/slimline.lua
 vim.opt.runtimepath:prepend(vim.fn.getcwd())
 local slimline = require("slimline")
+require("slimline.config").setup({ buffers = { min_width = 40 } })
 vim.o.columns = 160
 local first = vim.api.nvim_get_current_buf()
 vim.api.nvim_buf_set_name(first, "/tmp/slimline-one/shared.lua")
 local second = vim.api.nvim_create_buf(true, false)
 vim.api.nvim_buf_set_name(second, "/tmp/slimline-two/shared.lua")
 local rendered = slimline.render()
-assert(rendered:find("slimline-one/shared.lua", 1, true), rendered)
-assert(rendered:find("slimline-two/shared.lua", 1, true), rendered)
+assert(rendered:find("slimline-one/", 1, true), rendered)
+assert(rendered:find("slimline-two/", 1, true), rendered)
 
 local special = vim.api.nvim_create_buf(false, true)
 vim.api.nvim_set_current_buf(special)
@@ -146,5 +147,33 @@ slimline.setup({ recording = { icon = "●" }, encoding = { enabled = false }, g
 assert(slimline.render():find("● @q", 1, true))
 assert(not slimline.render():find("utf-8", 1, true))
 vim.fn.reg_recording = reg_recording
+slimline.setup({ git = { enabled = false }, encoding = { enabled = false }, diagnostics = { enabled = false } })
+for i = 1, 8 do
+	local buf = vim.api.nvim_create_buf(true, false)
+	vim.api.nvim_buf_set_name(buf, "/tmp/slimline-slot-" .. i .. ".lua")
+end
+local function visible_count()
+	local _, count = slimline.render():gsub("@v:lua.SlimlineClick@", "")
+	return count
+end
+local before = visible_count()
+vim.api.nvim_buf_set_name(second, "/tmp/a-very-long-name-that-should-not-change-the-viewport.lua")
+vim.bo[second].modified = true
+assert(visible_count() == before)
+displayed = vim.api.nvim_eval_statusline(slimline.render(), { maxwidth = vim.o.columns })
+assert(displayed.width == vim.o.columns, displayed.str)
+local name_position = assert(displayed.str:find("a-very", 1, true))
+vim.o.columns = 130
+local resized = vim.api.nvim_eval_statusline(slimline.render(), { maxwidth = 130 })
+assert(resized.str:find("a-very", 1, true) == name_position, resized.str)
+assert(resized.width == 130)
+assert(not pcall(slimline.setup, { buffers = { min_width = 0 } }))
+local config = require("slimline.config")
+config.setup({ buffers = { min_width = 22 } })
+assert(config.options.buffers.max_name_length == 22)
+config.setup({ buffers = { min_width = 22, max_name_length = 10 } })
+assert(config.options.buffers.max_name_length == 10)
+config.setup()
+assert(config.options.buffers.min_width == 15 and config.options.buffers.max_name_length == 15)
 print("Slimline regression tests passed")
 vim.cmd("qa!")

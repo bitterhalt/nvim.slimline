@@ -7,7 +7,8 @@ M.defaults = {
 	encoding = { enabled = true },
 	buffers = {
 		enabled = true,
-		max_name_length = 20,
+		max_name_length = 15,
+		min_width = 15,
 		close_icon = "×",
 		modified_icon = "*",
 		exclude_filetypes = {},
@@ -25,6 +26,9 @@ function M.setup(options)
 	options = options or {}
 	vim.validate({ options = { options, "table" } })
 	local merged = vim.tbl_deep_extend("force", vim.deepcopy(M.defaults), options)
+	if not (options.buffers and options.buffers.max_name_length ~= nil) then
+		merged.buffers.max_name_length = merged.buffers.min_width
+	end
 	local function validate(value, default, path)
 		for key, item in pairs(value) do
 			local expected = default[key]
@@ -36,7 +40,7 @@ function M.setup(options)
 		end
 	end
 	validate(merged, M.defaults, "")
-	for _, key in ipairs({ "max_name_length" }) do
+	for _, key in ipairs({ "max_name_length", "min_width" }) do
 		local value = merged.buffers[key]
 		assert(value >= 1 and value == math.floor(value), "Slimline: buffers." .. key .. " must be a positive integer")
 	end
@@ -49,11 +53,16 @@ function M.setup(options)
 		end
 	end
 	for key, value in pairs(merged.mode.labels) do
-		assert(type(key) == "string" and type(value) == "string", "Slimline: mode.labels must map mode codes to strings")
+		assert(
+			type(key) == "string" and type(value) == "string",
+			"Slimline: mode.labels must map mode codes to strings"
+		)
 	end
 	for name, value in pairs(merged.highlights) do
-		assert(type(name) == "string" and name:match("^Slimline") and type(value) == "table",
-			"Slimline: highlights must map Slimline group names to highlight tables")
+		assert(
+			type(name) == "string" and name:match("^Slimline") and type(value) == "table",
+			"Slimline: highlights must map Slimline group names to highlight tables"
+		)
 	end
 	M.options = merged
 end

@@ -69,7 +69,8 @@ Defaults below; pass only what you want to change in lazy.nvim's `opts` or
   },
   buffers = {
     enabled = true,
-    max_name_length = 20,
+    max_name_length = 15, -- follows min_width when omitted
+    min_width = 15, -- fixed buffer slot width (columns)
     close_icon = "×", -- empty string hides the close button
     modified_icon = "*",
     exclude_filetypes = {}, -- e.g. { "qf", "help" }
@@ -82,8 +83,10 @@ Defaults below; pass only what you want to change in lazy.nvim's `opts` or
 }
 ```
 
-Duplicate filenames retain their distinguishing paths even when longer than
-`max_name_length`. Filters affect the buffer list only.
+Duplicate filenames include distinguishing paths, truncated when necessary to
+fit their slot. Filters affect the buffer list only. `min_width` controls how
+wide each fixed buffer slot is, independently of filename length; very narrow windows can
+shrink the active slot below this minimum.
 
 `cursor.separator` is shared by all right-side sections. Recording is shown only
 while recording a macro; `recording.icon` customizes its label.
