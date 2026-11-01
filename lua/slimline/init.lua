@@ -1,6 +1,7 @@
 -- Slimline: one native statusline for mode, buffers and cursor.
 -- Optional dependency: nvim-web-devicons.
 local M = {}
+local icon_highlights = {}
 local config = require("slimline.config")
 local git = require("slimline.git")
 
@@ -46,6 +47,7 @@ local function terminal_color(index, fallback)
 end
 
 local function set_colors()
+	icon_highlights = {}
 	local normal = group("Normal")
 	local bg = normal.bg or "NONE"
 	local fg = terminal_color(7, normal.fg or "NONE")
@@ -137,11 +139,11 @@ local function icon_for(name, ft)
 	if not ok then
 		return ""
 	end
-	local icon = devicons.get_icon(name, nil, { default = false })
+	local icon, highlight = devicons.get_icon(name, nil, { default = false })
 	if not icon and ft and ft ~= "" then
-		icon = devicons.get_icon_by_filetype(ft, { default = false })
+		icon, highlight = devicons.get_icon_by_filetype(ft, { default = false })
 	end
-	return icon and (icon .. "  ") or ""
+	return icon and (icon .. "  ") or "", highlight
 end
 
 local function buffers()
@@ -166,7 +168,7 @@ local function buffers()
 		if included(buf) then
 			local path = vim.api.nvim_buf_get_name(buf)
 			local name = path == "" and "[No Name]" or vim.fn.fnamemodify(path, ":t")
-			local icon = icon_for(name, vim.bo[buf].filetype)
+			local icon, icon_highlight = icon_for(name, vim.bo[buf].filetype)
 			if path ~= "" and counts[name] > 1 then
 				-- Keep the filename and its distinguishing parent path intact.
 				name = vim.fn.fnamemodify(path, ":~:.")
@@ -182,6 +184,7 @@ local function buffers()
 			result[#result + 1] = {
 				buf = buf, label = label, name = " " .. icon .. name, modified = modified,
 				close = close,
+				icon = icon, icon_highlight = icon_highlight,
 			}
 		end
 	end
@@ -224,6 +227,28 @@ function M.close(buf, _, button, _)
 	end
 end
 
+local function colored_name(text, item, style)
+	local prefix = " " .. item.icon
+	if item.icon == "" or not item.icon_highlight or text:sub(1, #prefix) ~= prefix then
+		return escape(text)
+	end
+	local key = item.icon_highlight .. style
+	local highlight = icon_highlights[key]
+	if not highlight then
+		local source, base = group(item.icon_highlight), group(style)
+		highlight = "SlimlineIcon" .. key
+		vim.api.nvim_set_hl(0, highlight, {
+			fg = source.fg or base.fg,
+			ctermfg = source.ctermfg or base.ctermfg,
+			bg = base.bg or "NONE",
+			bold = base.bold,
+		})
+		icon_highlights[key] = highlight
+	end
+	return " " .. "%#" .. highlight .. "#" .. escape(item.icon)
+		.. "%#" .. style .. "#" .. escape(text:sub(#prefix + 1))
+end
+
 local function buffer_label(item, style, available)
 	local close = item.close
 	local label = item.label
@@ -244,9 +269,9 @@ local function buffer_label(item, style, available)
 			modified = ""
 		end
 	end
-	local text = escape(label)
+	local text = colored_name(label, item, style)
 	if focused and modified ~= "" then
-		text = escape(name) .. "%#SlimlineModified#" .. escape(modified) .. "%#" .. style .. "# "
+		text = colored_name(name, item, style) .. "%#SlimlineModified#" .. escape(modified) .. "%#" .. style .. "# "
 	end
 	if available then
 		text = text .. string.rep(" ", math.max(0, available - width(label) - width(close)))

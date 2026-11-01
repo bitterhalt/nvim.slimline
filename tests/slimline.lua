@@ -28,11 +28,13 @@ package.loaded["nvim-web-devicons"] = {
 		return opts.default and "D" or nil
 	end,
 	get_icon_by_filetype = function(ft)
-		return ft == "lua" and "L" or nil
+		return ft == "lua" and "L" or nil, "DevIconLua"
 	end,
 }
 vim.bo[second].filetype = "lua"
+vim.api.nvim_set_hl(0, "DevIconLua", { fg = "#51a0cf" })
 assert(slimline.render():find("L ", 1, true))
+assert(vim.api.nvim_get_hl(0, { name = "SlimlineIconDevIconLuaSlimlineActive" }).fg == 0x51a0cf)
 assert(not slimline.render():find("D  ", 1, true))
 vim.g.terminal_color_6 = "#12abcd"
 vim.g.terminal_color_8 = "#667788"

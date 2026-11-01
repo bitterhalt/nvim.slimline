@@ -22,7 +22,7 @@ A small Neovim statusline combining a buffer list
 
 Optional plugins:
 
-- `nvim-tree/nvim-web-devicons` for file icons.
+- `nvim-tree/nvim-web-devicons` for colored file icons.
 
 Buffers close using Neovim's built-in deletion API without forcing unsaved changes.
 
