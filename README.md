@@ -2,7 +2,8 @@
 
 A small Neovim statusline combining a buffer list
 
-<img width="749" height="29" alt="image" src="https://github.com/user-attachments/assets/52e83d6f-7c4e-4d95-8034-7d03e95dc941" />
+<img width="854" height="27" alt="2026-11-02-00-26-29_screenshot" src="https://github.com/user-attachments/assets/c998b3e3-8c78-42d1-abb3-91207b3e12e9" />
+
 
 ## Features
 
