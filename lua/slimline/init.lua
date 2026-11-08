@@ -209,6 +209,11 @@ local function buffers()
 	return result
 end
 
+function M.toggle_buffers()
+	config.options.buffers.enabled = not config.options.buffers.enabled
+	vim.cmd("redrawstatus")
+end
+
 function M.toggle_pin()
 	local current = vim.api.nvim_get_current_buf()
 	for _, item in ipairs(buffers()) do

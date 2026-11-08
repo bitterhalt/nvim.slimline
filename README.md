@@ -101,6 +101,15 @@ highlights = {
   not the previous configuration.
 - Component tables use `enabled = false` to hide their section. Recording has
   no toggle: it appears only while recording a macro.
+- `require("slimline").toggle_buffers()` toggles the buffer list, including pins,
+  without hiding the rest of the statusline. This lasts until the next `setup()`
+  call or restart. For example:
+
+  ```lua
+  vim.keymap.set("n", "<leader>bt", function()
+    require("slimline").toggle_buffers()
+  end, { desc = "Toggle Slimline buffers" })
+  ```
 - `mode.labels` maps Neovim mode codes, not the displayed labels. See `:help mode()`.
 - `cursor.separator` is shared by all right-side sections; hidden sections do
   not leave dangling separators.
