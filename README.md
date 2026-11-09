@@ -110,7 +110,12 @@ instead of the minimal installation spec above; omit options you do not need to 
       exclude_filetypes = {}, -- e.g. { "qf", "help" }
       exclude_buftypes = {}, -- e.g. { "terminal" }
     },
-    diagnostics = { enabled = true, error = "E!", warn = "W!" },
+    diagnostics = {
+      enabled = true,
+      error = "E!",
+      warn = "W!",
+      colors = {}, -- e.g. { error = "#ff5555", warn = "#f1c40f" }
+    },
     git = { enabled = true, icon = "", max_length = 24 },
     cursor = { enabled = true, separator = " | ", progress = true },
     highlights = {
@@ -201,9 +206,10 @@ Most highlights use `g:terminal_color_0` through `g:terminal_color_8` in true-co
 mode, falling back to `Normal` colors when undefined. Without true color they
 use terminal palette indexes. Transparent `Normal` backgrounds are preserved.
 
-Diagnostics use fixed red (`#cc241d`) and yellow (`#d79921`); pins link to the
-error highlight. File icons use devicons colors. Colors and configured highlight
-overrides are reapplied after colorscheme changes.
+Diagnostics use ANSI red and yellow by default. Override them with
+`diagnostics.colors` (`error` and `warn`); pins follow the error color. File icons
+use devicons colors. Colors and configured highlight overrides are reapplied
+after colorscheme changes.
 
 The `highlights` table accepts Neovim highlight attributes (see `:help nvim_set_hl()`).
 Overrides merge with each group's defaults; a `link` replaces the group's attributes.
@@ -228,8 +234,10 @@ Overrides merge with each group's defaults; a `link` replaces the group's attrib
 | `SlimlineModeCommand`  | Command mode                                                 |
 | `SlimlineModeTerminal` | Terminal mode                                                |
 
-Change `SlimlineError` to customize pin color; the pin link is restored by setup
-and colorscheme refreshes. File-icon highlight groups are generated internally.
+`diagnostics.colors` is the simplest way to customize error, warning, and pin
+colors. A `SlimlineError` highlight override also changes the pin, since the pin
+links to it. The link is restored by setup and colorscheme refreshes. File-icon
+highlight groups are generated internally.
 
 </details>
 

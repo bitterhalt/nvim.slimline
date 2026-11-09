@@ -46,6 +46,13 @@ local function terminal_color(index, fallback)
 	return fallback
 end
 
+local function diagnostic_color(custom, index, fallback)
+	if type(custom) == "string" and custom ~= "" then
+		return custom
+	end
+	return terminal_color(index, fallback)
+end
+
 local function set_colors()
 	icon_highlights = {}
 	local normal = group("Normal")
@@ -63,8 +70,17 @@ local function set_colors()
 	vim.api.nvim_set_hl(0, "SlimlineSingle", { bg = bg, fg = fg, ctermfg = 7, bold = true })
 	vim.api.nvim_set_hl(0, "SlimlineClose", { bg = bg, fg = fg, ctermfg = 7 })
 	vim.api.nvim_set_hl(0, "SlimlineModified", { bg = bg, fg = terminal_color(2, fg), ctermfg = 2, bold = true })
-	vim.api.nvim_set_hl(0, "SlimlineError", { bg = bg, fg = "#cc241d", ctermfg = 196 })
-	vim.api.nvim_set_hl(0, "SlimlineWarning", { bg = bg, fg = "#d79921", ctermfg = 220 })
+	local diagnostic_colors = config.options.diagnostics.colors
+	vim.api.nvim_set_hl(0, "SlimlineError", {
+		bg = bg,
+		fg = diagnostic_color(diagnostic_colors.error, 1, fg),
+		ctermfg = 1,
+	})
+	vim.api.nvim_set_hl(0, "SlimlineWarning", {
+		bg = bg,
+		fg = diagnostic_color(diagnostic_colors.warn, 3, fg),
+		ctermfg = 3,
+	})
 	vim.api.nvim_set_hl(0, "SlimlineGit", { bg = bg, fg = terminal_color(6, fg), ctermfg = 6 })
 	vim.api.nvim_set_hl(0, "SlimlineRecording", { bg = bg, fg = terminal_color(1, fg), ctermfg = 1, bold = true })
 	local colors = {

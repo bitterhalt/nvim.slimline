@@ -15,7 +15,7 @@ M.defaults = {
 		exclude_filetypes = {},
 		exclude_buftypes = {},
 	},
-	diagnostics = { enabled = true, error = "E!", warn = "W!" },
+	diagnostics = { enabled = true, error = "E!", warn = "W!", colors = {} },
 	git = { enabled = true, icon = "", max_length = 24 },
 	cursor = { enabled = true, separator = " | ", progress = true },
 	highlights = {},
@@ -66,6 +66,10 @@ function M.setup(options)
 			type(name) == "string" and name:match("^Slimline") and type(value) == "table",
 			"Slimline: highlights must map Slimline group names to highlight tables"
 		)
+	end
+	for key, value in pairs(merged.diagnostics.colors) do
+		assert(key == "error" or key == "warn", "Slimline: diagnostics.colors must use 'error' or 'warn'")
+		assert(type(value) == "string", "Slimline: diagnostics.colors." .. key .. " must be a string")
 	end
 	M.options = merged
 end
