@@ -2,9 +2,6 @@
 
 A small Neovim statusline combining a buffer list
 
-<img width="854" height="27" alt="2026-11-02-00-26-29_screenshot" src="https://github.com/user-attachments/assets/c998b3e3-8c78-42d1-abb3-91207b3e12e9" />
-
-
 ## Features
 
 - Global statusline with tab styled buffer list
@@ -15,6 +12,16 @@ A small Neovim statusline combining a buffer list
 - File progress
 - Pin buffers
 - Macro recording indicator
+
+## Screenshots
+
+Tabs combined with status line **(default)**
+
+> <img width="854" height="27" alt="2026-11-02-00-26-29_screenshot" src="https://github.com/user-attachments/assets/c998b3e3-8c78-42d1-abb3-91207b3e12e9" />
+
+Classical look with tabs at top
+
+> <img width="829" height="309" alt="image" src="https://github.com/user-attachments/assets/d117a0e6-88d3-43dc-accb-5250e37b63c8" />
 
 <details>
 <summary>Requirements</summary>
@@ -134,6 +141,7 @@ instead of the minimal installation spec above; omit options you do not need to 
     require("slimline").toggle_buffers()
   end, { desc = "Toggle Slimline buffers" })
   ```
+
 - `mode.labels` maps Neovim mode codes, not the displayed labels. See `:help mode()`.
 - `cursor.separator` is shared by all right-side sections; hidden sections do
   not leave dangling separators.
@@ -200,25 +208,25 @@ overrides are reapplied after colorscheme changes.
 The `highlights` table accepts Neovim highlight attributes (see `:help nvim_set_hl()`).
 Overrides merge with each group's defaults; a `link` replaces the group's attributes.
 
-| Group | Purpose |
-| --- | --- |
-| `SlimlineBase` | Inactive buffers, filler, and separators |
-| `SlimlineText` | Encoding and cursor information |
-| `SlimlineActive` | Active buffer with multiple entries |
-| `SlimlineSingle` | Active buffer when there is only one entry |
-| `SlimlineModified` | Focused buffer's modified marker |
-| `SlimlineClose` | Close-button highlight (currently hidden on focused buffers) |
-| `SlimlineError` | Error diagnostics and linked pin color |
-| `SlimlineWarning` | Warning diagnostics |
-| `SlimlineGit` | Git branch or commit |
-| `SlimlineRecording` | Macro recording indicator |
-| `SlimlinePin` | Pin symbol; links to `SlimlineError` |
-| `SlimlineModeNormal` | Normal mode |
-| `SlimlineModeInsert` | Insert mode |
-| `SlimlineModeVisual` | Visual and select modes |
-| `SlimlineModeReplace` | Replace mode |
-| `SlimlineModeCommand` | Command mode |
-| `SlimlineModeTerminal` | Terminal mode |
+| Group                  | Purpose                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| `SlimlineBase`         | Inactive buffers, filler, and separators                     |
+| `SlimlineText`         | Encoding and cursor information                              |
+| `SlimlineActive`       | Active buffer with multiple entries                          |
+| `SlimlineSingle`       | Active buffer when there is only one entry                   |
+| `SlimlineModified`     | Focused buffer's modified marker                             |
+| `SlimlineClose`        | Close-button highlight (currently hidden on focused buffers) |
+| `SlimlineError`        | Error diagnostics and linked pin color                       |
+| `SlimlineWarning`      | Warning diagnostics                                          |
+| `SlimlineGit`          | Git branch or commit                                         |
+| `SlimlineRecording`    | Macro recording indicator                                    |
+| `SlimlinePin`          | Pin symbol; links to `SlimlineError`                         |
+| `SlimlineModeNormal`   | Normal mode                                                  |
+| `SlimlineModeInsert`   | Insert mode                                                  |
+| `SlimlineModeVisual`   | Visual and select modes                                      |
+| `SlimlineModeReplace`  | Replace mode                                                 |
+| `SlimlineModeCommand`  | Command mode                                                 |
+| `SlimlineModeTerminal` | Terminal mode                                                |
 
 Change `SlimlineError` to customize pin color; the pin link is restored by setup
 and colorscheme refreshes. File-icon highlight groups are generated internally.
@@ -243,17 +251,6 @@ keys = {
   { "<leader>bp", function() require("slimline").toggle_pin() end, desc = "Toggle buffer pin" },
   { "<leader>bn", function() require("slimline").next_pin() end, desc = "Next pinned buffer" },
 },
-```
-
-</details>
-
-<details>
-<summary>Tests</summary>
-
-From the repository root:
-
-```sh
-nvim --headless -u NONE -l tests/slimline.lua
 ```
 
 </details>
