@@ -7,6 +7,7 @@ M.defaults = {
 	encoding = { enabled = true },
 	buffers = {
 		enabled = true,
+		position = "bottom",
 		max_name_length = 15,
 		min_width = 15,
 		close_icon = "×",
@@ -40,6 +41,8 @@ function M.setup(options)
 		end
 	end
 	validate(merged, M.defaults, "")
+	assert(merged.buffers.position == "top" or merged.buffers.position == "bottom",
+		"Slimline: buffers.position must be 'top' or 'bottom'")
 	for _, key in ipairs({ "max_name_length", "min_width" }) do
 		local value = merged.buffers[key]
 		assert(value >= 1 and value == math.floor(value), "Slimline: buffers." .. key .. " must be a positive integer")

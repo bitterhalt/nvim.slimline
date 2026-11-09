@@ -57,46 +57,70 @@ require("slimline").setup()
 
 ## Configuration
 
-Defaults below; pass only what you want to change in lazy.nvim's `opts` or
-`require("slimline").setup({...})`:
+Full lazy.nvim spec with default options and example keybindings. Use this
+instead of the minimal installation spec above; omit options you do not need to change.
 
 ```lua
 {
-  icons = true,
-  encoding = { enabled = true },
-  recording = { icon = "REC" },
-  mode = {
-    enabled = true,
-    labels = {}, -- Neovim mode codes, e.g. { n = "NORMAL", i = "INSERT" }
+  "bitterhalt/nvim.slimline",
+  main = "slimline",
+  lazy = false,
+  dependencies = {
+    "nvim-tree/nvim-web-devicons", -- optional
   },
-  buffers = {
-    enabled = true,
-    max_name_length = 15, -- follows min_width when omitted
-    min_width = 15, -- fixed buffer slot width (columns)
-    close_icon = "×", -- empty string hides the close button
-    modified_icon = "*",
-    exclude_filetypes = {}, -- e.g. { "qf", "help" }
-    exclude_buftypes = {}, -- e.g. { "terminal" }
+  keys = {
+    {
+      "<leader>bt",
+      function() require("slimline").toggle_buffers() end,
+      desc = "Toggle Slimline buffers",
+    },
+    {
+      "<leader>bp",
+      function() require("slimline").toggle_pin() end,
+      desc = "Toggle buffer pin",
+    },
+    {
+      "<leader>bn",
+      function() require("slimline").next_pin() end,
+      desc = "Next pinned buffer",
+    },
   },
-  diagnostics = { enabled = true, error = "E!", warn = "W!" },
-  git = { enabled = true, icon = "", max_length = 24 },
-  cursor = { enabled = true, separator = " | ", progress = true },
-  highlights = {},
-}
-```
-
-```lua
-highlights = {
-  SlimlineActive = { bold = false },
-  SlimlineGit = { fg = "#aabbcc" },
-}
+  opts = {
+    icons = true,
+    encoding = { enabled = true },
+    recording = { icon = "REC" },
+    mode = {
+      enabled = true,
+      labels = {}, -- Neovim mode codes, e.g. { n = "NORMAL", i = "INSERT" }
+    },
+    buffers = {
+      enabled = true,
+      position = "bottom", -- "top" moves the buffer list to the tabline
+      max_name_length = 15, -- follows min_width when omitted
+      min_width = 15, -- fixed buffer slot width (columns)
+      close_icon = "×", -- empty string hides the close button
+      modified_icon = "*",
+      exclude_filetypes = {}, -- e.g. { "qf", "help" }
+      exclude_buftypes = {}, -- e.g. { "terminal" }
+    },
+    diagnostics = { enabled = true, error = "E!", warn = "W!" },
+    git = { enabled = true, icon = "", max_length = 24 },
+    cursor = { enabled = true, separator = " | ", progress = true },
+    highlights = {
+      -- SlimlineActive = { bold = false },
+      -- SlimlineGit = { fg = "#aabbcc" },
+    },
+  },
+},
 ```
 
 <details>
 <summary>Setup and configuration behavior</summary>
 
-- Setup enables the global statusline (`laststatus=3`) and hides the tabline
-  (`showtabline=0`). Other statusline/bufferline plugins can overwrite these settings.
+- Setup enables the global statusline (`laststatus=3`). By default it hides the
+  tabline (`showtabline=0`). Set `buffers.position = "top"` to put buffers in the
+  tabline instead; mode, Git, diagnostics, and cursor info remain at the bottom.
+  Other statusline/bufferline plugins can overwrite these settings.
 - Options are merged with defaults. Each `setup()` call starts from defaults,
   not the previous configuration.
 - Component tables use `enabled = false` to hide their section. Recording has

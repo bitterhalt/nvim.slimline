@@ -209,9 +209,20 @@ local function buffers()
 	return result
 end
 
+local function redraw_tabline()
+	-- Tabline click-target storage is not initialized before VimEnter.
+	if vim.v.vim_did_enter == 1 then
+		vim.cmd("redrawtabline")
+	end
+end
+
 function M.toggle_buffers()
 	config.options.buffers.enabled = not config.options.buffers.enabled
+	if config.options.buffers.position == "top" then
+		vim.o.showtabline = config.options.buffers.enabled and 2 or 0
+	end
 	vim.cmd("redrawstatus")
+	redraw_tabline()
 end
 
 function M.toggle_pin()
@@ -220,6 +231,7 @@ function M.toggle_pin()
 		if item.buf == current then
 			vim.b[current].slimline_pinned = not vim.b[current].slimline_pinned
 			vim.cmd("redrawstatus")
+			redraw_tabline()
 			return
 		end
 	end
@@ -402,6 +414,23 @@ local function buffer_section(items, active, available, selected)
 			regular_selected, "SlimlineActive")
 end
 
+function M.render_tabline()
+	if config.options.buffers.position ~= "top" or not config.options.buffers.enabled then
+		return ""
+	end
+	local items = buffers()
+	local selected = 0
+	local current = vim.api.nvim_get_current_buf()
+	for i, item in ipairs(items) do
+		if item.buf == current then
+			selected = i
+			break
+		end
+	end
+	return "%#SlimlineBase# " .. buffer_section(items, math.max(1, selected), vim.o.columns - 1, selected)
+		.. "%#SlimlineBase#%="
+end
+
 function M.render()
 	local options = config.options
 	local current = vim.api.nvim_get_current_buf()
@@ -452,7 +481,7 @@ function M.render()
 	local separator = options.cursor.separator:gsub("%s$", "")
 	right_width = right_width + math.max(#sections - 1, 0) * width(separator)
 	local right_section = table.concat(sections, "%#SlimlineBase#" .. escape(separator))
-	local items = buffers()
+	local items = options.buffers.position == "bottom" and buffers() or {}
 	local active
 	for i, item in ipairs(items) do
 		if item.buf == current then
@@ -485,11 +514,28 @@ function M.setup(options)
 	_G.SlimlineClick = M.click
 	_G.SlimlineClose = M.close
 	_G.SlimlineRender = M.render
+	_G.SlimlineTabline = M.render_tabline
 	vim.opt.laststatus = 3
-	vim.opt.showtabline = 0
+	local top = config.options.buffers.position == "top"
+	vim.opt.showtabline = top and config.options.buffers.enabled and 2 or 0
+	if top then
+		vim.opt.tabline = "%!v:lua.SlimlineTabline()"
+	elseif vim.o.tabline == "%!v:lua.SlimlineTabline()" then
+		vim.opt.tabline = ""
+	end
 	vim.opt.statusline = "%!v:lua.SlimlineRender()"
 	local augroup = vim.api.nvim_create_augroup("Slimline", { clear = true })
 	vim.api.nvim_create_autocmd("ColorScheme", { group = augroup, callback = set_colors })
+	vim.api.nvim_create_autocmd({ "BufEnter", "BufAdd", "BufDelete", "BufModifiedSet", "BufFilePost", "FileType" }, {
+		group = augroup,
+		callback = function()
+			if config.options.buffers.position == "top" then
+				vim.schedule(function()
+					redraw_tabline()
+				end)
+			end
+		end,
+	})
 	vim.api.nvim_create_autocmd({ "BufEnter", "BufFilePost", "DirChanged", "FocusGained", "TermLeave" }, {
 		group = augroup,
 		callback = git.refresh,
