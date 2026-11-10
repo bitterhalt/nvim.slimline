@@ -294,6 +294,7 @@ with each group's defaults; a `link` replaces the group's attributes.
     SlimlineActive        Active buffer with multiple entries
     SlimlineSingle        Active buffer when there is only one entry
     SlimlineModified      Focused buffer's modified marker
+    SlimlineSaved         Focused buffer's saved check mark
     SlimlineClose         Close button
     SlimlineError         Error diagnostics
     SlimlineWarning       Warning diagnostics

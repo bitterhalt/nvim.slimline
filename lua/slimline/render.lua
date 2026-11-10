@@ -104,7 +104,7 @@ local function entry(item, style, space)
 	end
 	parts[#parts + 1] = escape(trail) .. string.rep(" ", padding)
 	if check ~= "" then
-		parts[#parts + 1] = "%#SlimlineText#" .. escape(check) .. back
+		parts[#parts + 1] = "%#SlimlineSaved#" .. escape(check) .. back
 	end
 	parts[#parts + 1] = "%T"
 	if close ~= "" then

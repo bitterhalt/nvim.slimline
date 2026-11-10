@@ -249,6 +249,7 @@ Overrides merge with each group's defaults; a `link` replaces the group's attrib
 | `SlimlineActive`       | Active buffer with multiple entries                          |
 | `SlimlineSingle`       | Active buffer when there is only one entry                   |
 | `SlimlineModified`     | Focused buffer's modified marker                             |
+| `SlimlineSaved`        | Focused buffer's saved check mark                            |
 | `SlimlineClose`        | Close-button highlight (currently hidden on focused buffers) |
 | `SlimlineError`        | Error diagnostics and linked pin color                       |
 | `SlimlineWarning`      | Warning diagnostics                                          |

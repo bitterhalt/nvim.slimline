@@ -74,6 +74,7 @@ function M.apply()
 	set("SlimlineSingle", { bg = bg, fg = fg, ctermfg = 7, bold = true })
 	set("SlimlineClose", { bg = bg, fg = fg, ctermfg = 7 })
 	set("SlimlineModified", { bg = bg, fg = terminal_color(2, fg), ctermfg = 2, bold = true })
+	set("SlimlineSaved", { bg = bg, fg = fg, ctermfg = 7 })
 	local diagnostic_colors = config.options.diagnostics.colors
 	set("SlimlineError", { bg = bg, fg = diagnostic_color(diagnostic_colors.error, 1, fg), ctermfg = 1 })
 	set("SlimlineWarning", { bg = bg, fg = diagnostic_color(diagnostic_colors.warn, 3, fg), ctermfg = 3 })
