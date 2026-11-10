@@ -57,7 +57,7 @@ reason. Keep it that way.
   before the buffer is unlisted. `CursorHold` is an intentional self-heal for changes that
   fire no event (e.g. a plugin setting `'modified'` directly). Anything that changes what
   an item shows must either invalidate the cache or be computed at render time.
-- **Items vs. render:** items hold data (`text`, `icon`, `modified`, `closable`,
+- **Items vs. render:** items hold data (`text`, `icon`, `modified`, `saved`, `closable`,
   `pinned`). `render.entry()` composes the label per slot width and drops optional parts
   (modified marker, icon, pin, padding) when narrow. Highlights are applied there, never by
   re-parsing strings.

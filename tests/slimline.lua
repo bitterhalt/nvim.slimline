@@ -368,6 +368,35 @@ test("modified and close markers can be hidden", function()
 	eq(buffers.list()[1].closable, false)
 end)
 
+test("files without a devicon use the placeholder icon", function()
+	local original = package.loaded["nvim-web-devicons"]
+	package.loaded["nvim-web-devicons"] = {
+		get_icon = function(name)
+			if name:match("%.lua$") then
+				return "\u{e725}", "DevIconLua"
+			end
+		end,
+		get_icon_by_filetype = function()
+			return nil
+		end,
+	}
+	fresh()
+	open({ "/proj/a.lua", "/proj/b.unknownext" })
+	local list = buffers.list()
+	eq(list[1].icon, "\u{e725}  ", "a devicon still wins")
+	eq(list[2].icon, "\u{f0214}  ")
+
+	fresh({ icons = false })
+	open({ "/proj/a.unknownext" })
+	eq(buffers.list()[1].icon, "", "icons = false hides the placeholder")
+
+	fresh({ buffers = { placeholder_icon = "" } })
+	open({ "/proj/a.unknownext" })
+	eq(buffers.list()[1].icon, "", "an empty placeholder is hidden")
+
+	package.loaded["nvim-web-devicons"] = original
+end)
+
 ---------------------------------------------------------------------------
 -- Rendering
 ---------------------------------------------------------------------------
@@ -383,6 +412,20 @@ test("statusline shows mode, buffers, encoding and cursor", function()
 	matches(text, "b.lua")
 	matches(text, "utf-8")
 	matches(text, "1:1 | 100%")
+end)
+
+test("the focused unmodified buffer shows a check mark", function()
+	fresh()
+	local bufs = open({ "/proj/a.lua", "/proj/b.lua" })
+	matches(statusline_text(), "\u{f012c}")
+	vim.bo[bufs[1]].modified = true
+	vim.api.nvim_exec_autocmds("OptionSet", { pattern = "modified" })
+	flush()
+	absent(statusline_text(), "\u{f012c}", "modified buffers show no check mark")
+
+	fresh({ buffers = { saved_icon = "" } })
+	open({ "/proj/a.lua", "/proj/b.lua" })
+	absent(statusline_text(), "\u{f012c}", "an empty saved_icon hides the check mark")
 end)
 
 test("percent signs in names are escaped", function()

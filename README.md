@@ -118,6 +118,8 @@ instead of the minimal installation spec above; omit options you do not need to 
       min_width = 15, -- fixed buffer slot width (columns)
       close_icon = "×", -- empty string hides the close button
       modified_icon = "*",
+      placeholder_icon = "\u{f0214}", -- shown when devicons has no icon for the file
+      saved_icon = "\u{f012c}", -- check mark on the focused, unmodified buffer
       keep_layout = true, -- switch windows to another buffer first when closing, so splits survive
       persist_pins = false, -- store pins in g:SlimlinePins for sessions (needs "globals" in sessionoptions)
       exclude_filetypes = {}, -- e.g. { "qf", "help" }
@@ -188,16 +190,19 @@ instead of the minimal installation spec above; omit options you do not need to 
   listed buffer stays in view when space permits.
 - The active buffer is bold cyan, or bold white when it is the only entry.
   Inactive buffers are dimmed. Special/unlisted buffers do not select an entry.
-- File icons use devicons colors. Unknown files have no placeholder icon.
-  `icons = false` disables file icons, not the Git or pin symbols.
+- File icons use devicons colors. Files without a devicon show
+  `placeholder_icon`. `icons = false` disables file icons, not the Git or pin
+  symbols.
 - Left-click a label to switch buffers. Close buttons appear only on unmodified,
-  inactive buffers. Modified buffers show the modified marker, green when focused.
+  inactive buffers; the focused unmodified buffer shows a check mark instead.
+  Modified buffers show the modified marker, green when focused.
 - Closing never forces unsaved changes. With `buffers.keep_layout` (default),
   windows showing the buffer are switched to another buffer first, so splits
   survive. With `keep_layout = false`, Neovim's plain deletion closes them.
 - Middle-click a label to close it. Close buttons are clickable too.
 - The list is cached and rebuilt only when buffers change, not on every redraw.
-- Empty `close_icon` or `modified_icon` strings hide the respective marker.
+- Empty `close_icon`, `modified_icon`, `placeholder_icon` or `saved_icon`
+  strings hide the respective marker.
 - `exclude_filetypes` and `exclude_buftypes` filter only the list; they do not
   close buffers or disable diagnostics for the current buffer.
 

@@ -56,11 +56,12 @@ local function entry(item, style, space)
 	local options = config.options.buffers
 	local focused = style == "SlimlineActive" or style == "SlimlineSingle"
 	local close = (not focused and item.closable) and (options.close_icon .. " ") or ""
-	-- Keep a close target only when there is also room for a useful label.
-	if space < width(close) + 2 then
-		close = ""
+	local check = (focused and item.saved and options.saved_icon ~= "") and (options.saved_icon .. " ") or ""
+	-- Keep a marker only when there is also room for a useful label.
+	if space < width(close) + width(check) + 2 then
+		close, check = "", ""
 	end
-	local label_space = space - width(close)
+	local label_space = space - width(close) - width(check)
 
 	local lead, pin, icon, mod, trail =
 		" ", item.pinned and (buffers.PIN_GLYPH .. "  ") or "", item.icon, item.modified, " "
@@ -101,7 +102,11 @@ local function entry(item, style, space)
 	if mod ~= "" then
 		parts[#parts + 1] = focused and ("%#SlimlineModified#" .. escape(mod) .. back) or escape(mod)
 	end
-	parts[#parts + 1] = escape(trail) .. string.rep(" ", padding) .. "%T"
+	parts[#parts + 1] = escape(trail) .. string.rep(" ", padding)
+	if check ~= "" then
+		parts[#parts + 1] = "%#SlimlineText#" .. escape(check) .. back
+	end
+	parts[#parts + 1] = "%T"
 	if close ~= "" then
 		parts[#parts + 1] = ("%%#%s#%%%d@v:lua.Slimline.close@%s%%T"):format(
 			focused and "SlimlineClose" or "SlimlineBase",

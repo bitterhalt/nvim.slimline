@@ -12,6 +12,8 @@ local M = {}
 ---@field min_width? integer Fixed buffer slot width in columns
 ---@field close_icon? string Empty string hides the close button
 ---@field modified_icon? string Empty string hides the modified marker
+---@field placeholder_icon? string Icon for files that have no devicon
+---@field saved_icon? string Check mark on the focused, unmodified buffer
 ---@field keep_layout? boolean Switch windows to another buffer before closing, so splits survive
 ---@field persist_pins? boolean Store pins in `g:SlimlinePins` so sessions can restore them
 ---@field exclude_filetypes? string[]
@@ -60,6 +62,8 @@ M.defaults = {
 		min_width = 15,
 		close_icon = "×",
 		modified_icon = "*",
+		placeholder_icon = "\u{f0214}",
+		saved_icon = "\u{f012c}",
 		keep_layout = true,
 		persist_pins = false,
 		exclude_filetypes = {},

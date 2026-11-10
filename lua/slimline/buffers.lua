@@ -10,6 +10,7 @@ M.PIN_GLYPH = "\u{f435}"
 ---@field pinned boolean
 ---@field text string Display name (already truncated unless it is a path)
 ---@field modified string Modified marker including its leading space, or ""
+---@field saved boolean Whether the buffer has no unsaved changes
 ---@field closable boolean Whether an inactive entry may show a close button
 ---@field icon string Glyph followed by padding, or ""
 ---@field icon_highlight? string devicons highlight group
@@ -26,7 +27,10 @@ local function is_pinned(buf)
 	return vim.b[buf].slimline_pinned == true
 end
 
-local function icon_for(devicons, name, filetype)
+---@param placeholder string Icon used when devicons has no match; "" hides it
+---@return string icon Glyph followed by padding, or ""
+---@return string? highlight devicons highlight group
+local function icon_for(devicons, name, filetype, placeholder)
 	if not devicons then
 		return "", nil
 	end
@@ -34,7 +38,10 @@ local function icon_for(devicons, name, filetype)
 	if not icon and filetype ~= "" then
 		icon, highlight = devicons.get_icon_by_filetype(filetype, { default = false })
 	end
-	return icon and (icon .. "  ") or "", highlight
+	if icon then
+		return icon .. "  ", highlight
+	end
+	return placeholder ~= "" and (placeholder .. "  ") or "", nil
 end
 
 ---@return slimline.Item[]
@@ -67,7 +74,7 @@ local function build()
 	for _, buf in ipairs(listed) do
 		local path = vim.api.nvim_buf_get_name(buf)
 		local name = path == "" and "[No Name]" or vim.fn.fnamemodify(path, ":t")
-		local icon, icon_highlight = icon_for(devicons, name, vim.bo[buf].filetype)
+		local icon, icon_highlight = icon_for(devicons, name, vim.bo[buf].filetype, options.placeholder_icon)
 		local text
 		if path ~= "" and counts[name] > 1 then
 			-- Keep the filename and its distinguishing parent path intact.
@@ -83,6 +90,7 @@ local function build()
 			pinned = is_pinned(buf),
 			text = text,
 			modified = modified,
+			saved = not vim.bo[buf].modified,
 			closable = not vim.bo[buf].modified and options.close_icon ~= "",
 			icon = icon,
 			icon_highlight = icon_highlight,

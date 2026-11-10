@@ -80,6 +80,8 @@ Default values: >lua
         min_width = 15,
         close_icon = "×",
         modified_icon = "*",
+        placeholder_icon = "\u{f0214}",
+        saved_icon = "\u{f012c}",
         keep_layout = true,
         persist_pins = false,
         exclude_filetypes = {},
@@ -134,6 +136,14 @@ toggle: it appears only while a macro is being recorded.
 
 `buffers.close_icon`, `buffers.modified_icon`
     Marker symbols. An empty string hides the marker.
+
+`buffers.placeholder_icon`
+    Icon shown for files that nvim-web-devicons has no icon for. Only used
+    when `icons` is enabled. An empty string hides it.
+
+`buffers.saved_icon`
+    Check mark shown on the focused buffer while it has no unsaved changes,
+    where inactive buffers show a close button. An empty string hides it.
 
 `buffers.keep_layout`
     When closing a buffer that is shown in windows, switch those windows to
@@ -216,8 +226,9 @@ been idle (|CursorHold|).
   buffer stays in view when space permits.
 - The active buffer is bold cyan, or bold white when it is the only entry.
   Special and unlisted buffers do not select an entry.
-- Close buttons appear only on unmodified, inactive buffers. Modified buffers
-  show the modified marker, green when focused.
+- Close buttons appear only on unmodified, inactive buffers. The focused
+  unmodified buffer shows a check mark instead. Modified buffers show the
+  modified marker, green when focused.
 
 ==============================================================================
 7. PINS                                                        *slimline-pins*
