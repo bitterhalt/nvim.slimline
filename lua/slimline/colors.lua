@@ -118,7 +118,8 @@ function M.icon_group(source, style)
 			fg = icon.fg or base.fg,
 			ctermfg = icon.ctermfg or base.ctermfg,
 			bg = base.bg or "NONE",
-			bold = base.bold,
+			-- Bold glyphs smear in many terminals; keep icons at normal weight.
+			bold = false,
 		})
 		icon_groups[key] = name
 	end

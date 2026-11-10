@@ -75,13 +75,6 @@ function M.prev_buffer()
 	buffers.cycle(-1)
 end
 
---- Jump to the n-th buffer of the list (pinned first). Negative values count
---- from the end, so `-1` is the last buffer.
----@param n integer
-function M.goto_buffer(n)
-	buffers.goto_buffer(n)
-end
-
 --- Close a buffer without forcing unsaved changes.
 ---@param buf? integer Defaults to the current buffer
 ---@return boolean closed

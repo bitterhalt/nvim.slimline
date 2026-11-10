@@ -276,17 +276,8 @@ All functions live in `require("slimline")`. No keybindings are installed.
 | `toggle_pin()`                  | Pin or unpin the current buffer                         |
 | `next_pin()`/`prev_pin()`       | Cycle through pinned buffers, wrapping                  |
 | `next_buffer()`/`prev_buffer()` | Cycle through the list, wrapping; respects exclusions   |
-| `goto_buffer(n)`                | Jump to the n-th entry (pinned first); `-1` is the last |
 | `close_buffer(buf?)`            | Close a buffer without forcing; honors `keep_layout`    |
 | `refresh()`                     | Rebuild the list and refresh Git                        |
-
-```lua
-for i = 1, 9 do
-  vim.keymap.set("n", "<leader>" .. i, function()
-    require("slimline").goto_buffer(i)
-  end, { desc = "Buffer " .. i })
-end
-```
 
 </details>
 

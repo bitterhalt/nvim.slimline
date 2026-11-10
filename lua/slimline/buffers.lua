@@ -214,16 +214,6 @@ function M.cycle(delta, pinned_only)
 	vim.api.nvim_set_current_buf(pool[target].buf)
 end
 
---- Jump to the n-th entry of the list. Negative values count from the end.
----@param n integer
-function M.goto_buffer(n)
-	local items = M.list()
-	local item = items[n < 0 and #items + n + 1 or n]
-	if item then
-		vim.api.nvim_set_current_buf(item.buf)
-	end
-end
-
 ---------------------------------------------------------------------------
 -- Closing
 ---------------------------------------------------------------------------

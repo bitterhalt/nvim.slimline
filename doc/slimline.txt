@@ -184,12 +184,6 @@ prev_buffer()
     Switch to the next or previous buffer of the list, wrapping around.
     Buffers hidden by the exclusion filters are skipped.
 
-                                                      *slimline.goto_buffer()*
-goto_buffer({n})
-    Jump to the {n}-th entry of the list (pinned buffers first). Negative
-    values count from the end: `-1` is the last buffer. Out of range values
-    are ignored.
-
                                                      *slimline.close_buffer()*
 close_buffer([{buf}])
     Close {buf} (default: the current buffer) without forcing unsaved
@@ -207,11 +201,6 @@ Example mappings: >lua
     map("n", "<S-h>", slimline.prev_buffer, { desc = "Previous buffer" })
     map("n", "<leader>bp", slimline.toggle_pin, { desc = "Pin" })
     map("n", "<leader>bd", slimline.close_buffer, { desc = "Close" })
-    for i = 1, 9 do
-      map("n", "<leader>" .. i, function()
-        slimline.goto_buffer(i)
-      end, { desc = "Buffer " .. i })
-    end
 <
 ==============================================================================
 6. BUFFER LIST                                              *slimline-buffers*
