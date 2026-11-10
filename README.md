@@ -1,5 +1,7 @@
 # Slimline
 
+[![CI](https://github.com/bitterhalt/nvim.slimline/actions/workflows/ci.yml/badge.svg)](https://github.com/bitterhalt/nvim.slimline/actions/workflows/ci.yml)
+
 A small Neovim statusline combining a buffer list
 
 ## Features
@@ -10,8 +12,12 @@ A small Neovim statusline combining a buffer list
 - Diagnostics
 - Cursor line
 - File progress
-- Pin buffers
+- Pin buffers (optionally restored with sessions)
 - Macro recording indicator
+- Mouse support: click to switch, close button, middle-click to close
+- Closing keeps your window layout
+- Optional search count
+- `:checkhealth slimline` and `:help slimline`
 
 ## Screenshots
 
@@ -91,14 +97,19 @@ instead of the minimal installation spec above; omit options you do not need to 
       function() require("slimline").next_pin() end,
       desc = "Next pinned buffer",
     },
+    { "<S-l>", function() require("slimline").next_buffer() end, desc = "Next buffer" },
+    { "<S-h>", function() require("slimline").prev_buffer() end, desc = "Previous buffer" },
+    { "<leader>bd", function() require("slimline").close_buffer() end, desc = "Close buffer" },
   },
   opts = {
     icons = true,
     encoding = { enabled = true },
+    search = { enabled = false }, -- show current/total while 'hlsearch' is active
     recording = { icon = "REC" },
     mode = {
       enabled = true,
       labels = {}, -- Neovim mode codes, e.g. { n = "NORMAL", i = "INSERT" }
+      hide_showmode = true, -- set 'noshowmode' so the mode is not shown twice
     },
     buffers = {
       enabled = true,
@@ -107,6 +118,8 @@ instead of the minimal installation spec above; omit options you do not need to 
       min_width = 15, -- fixed buffer slot width (columns)
       close_icon = "×", -- empty string hides the close button
       modified_icon = "*",
+      keep_layout = true, -- switch windows to another buffer first when closing, so splits survive
+      persist_pins = false, -- store pins in g:SlimlinePins for sessions (needs "globals" in sessionoptions)
       exclude_filetypes = {}, -- e.g. { "qf", "help" }
       exclude_buftypes = {}, -- e.g. { "terminal" }
     },
@@ -117,7 +130,7 @@ instead of the minimal installation spec above; omit options you do not need to 
       colors = {}, -- e.g. { error = "#ff5555", warn = "#f1c40f" }
     },
     git = { enabled = true, icon = "", max_length = 24 },
-    cursor = { enabled = true, separator = " | ", progress = true },
+    cursor = { enabled = true, separator = " | ", progress = true, virtual_column = false },
     highlights = {
       -- SlimlineActive = { bold = false },
       -- SlimlineGit = { fg = "#aabbcc" },
@@ -133,6 +146,12 @@ instead of the minimal installation spec above; omit options you do not need to 
   tabline (`showtabline=0`). Set `buffers.position = "top"` to put buffers in the
   tabline instead; mode, Git, diagnostics, and cursor info remain at the bottom.
   Other statusline/bufferline plugins can overwrite these settings.
+- `showmode` is switched off while the mode indicator is shown, so the mode is
+  not displayed twice. Set `mode.hide_showmode = false` to keep it.
+- Invalid options do not abort startup: the problem is shown with `vim.notify`
+  and the defaults are used. If rendering ever fails, Slimline falls back to a
+  plain statusline and reports the error once.
+- Run `:checkhealth slimline` to diagnose problems, and see `:help slimline`.
 - Options are merged with defaults. Each `setup()` call starts from defaults,
   not the previous configuration.
 - Component tables use `enabled = false` to hide their section. Recording has
@@ -172,8 +191,11 @@ instead of the minimal installation spec above; omit options you do not need to 
   `icons = false` disables file icons, not the Git or pin symbols.
 - Left-click a label to switch buffers. Close buttons appear only on unmodified,
   inactive buffers. Modified buffers show the modified marker, green when focused.
-- Closing uses Neovim's native deletion API without forcing unsaved changes;
-  deleting a buffer displayed in a split can affect the window layout.
+- Closing never forces unsaved changes. With `buffers.keep_layout` (default),
+  windows showing the buffer are switched to another buffer first, so splits
+  survive. With `keep_layout = false`, Neovim's plain deletion closes them.
+- Middle-click a label to close it. Close buttons are clickable too.
+- The list is cached and rebuilt only when buffers change, not on every redraw.
 - Empty `close_icon` or `modified_icon` strings hide the respective marker.
 - `exclude_filetypes` and `exclude_buftypes` filter only the list; they do not
   close buffers or disable diagnostics for the current buffer.
@@ -188,7 +210,7 @@ instead of the minimal installation spec above; omit options you do not need to 
   repositories and in special buffers.
 - Git checks are asynchronous and cached, not run during statusline rendering.
   They refresh on buffer entry/name changes, directory changes, focus gain, and
-  leaving terminal mode.
+  leaving terminal mode, shell commands, and the `FugitiveChanged` user event.
 - Diagnostics show error and warning counts for the current buffer, hidden at
   zero. Hints and informational diagnostics are omitted. Slimline displays
   diagnostics supplied through Neovim; it does not configure an LSP or linter.
@@ -236,8 +258,44 @@ Overrides merge with each group's defaults; a `link` replaces the group's attrib
 
 `diagnostics.colors` is the simplest way to customize error, warning, and pin
 colors. A `SlimlineError` highlight override also changes the pin, since the pin
-links to it. The link is restored by setup and colorscheme refreshes. File-icon
+links to it. `SlimlinePin` can also be overridden on its own through `highlights`. The link is restored by setup and colorscheme refreshes. File-icon
 highlight groups are generated internally.
+
+</details>
+
+<details>
+<summary>Lua API</summary>
+
+All functions live in `require("slimline")`. No keybindings are installed.
+
+| Function                | Purpose                                                          |
+| ----------------------- | ---------------------------------------------------------------- |
+| `setup(opts)`           | Enable Slimline                                                  |
+| `toggle_buffers()`      | Show or hide the buffer list                                     |
+| `toggle_pin()`          | Pin or unpin the current buffer                                  |
+| `next_pin()`/`prev_pin()`       | Cycle through pinned buffers, wrapping                    |
+| `next_buffer()`/`prev_buffer()` | Cycle through the list, wrapping; respects exclusions     |
+| `goto_buffer(n)`        | Jump to the n-th entry (pinned first); `-1` is the last          |
+| `close_buffer(buf?)`    | Close a buffer without forcing; honors `keep_layout`             |
+| `refresh()`             | Rebuild the list and refresh Git                                 |
+
+```lua
+for i = 1, 9 do
+  vim.keymap.set("n", "<leader>" .. i, function()
+    require("slimline").goto_buffer(i)
+  end, { desc = "Buffer " .. i })
+end
+```
+
+</details>
+
+<details>
+<summary>Search count, search and cursor details</summary>
+
+- `search.enabled = true` shows `current/total` while `hlsearch` is active
+  (`>999` for very large counts).
+- `cursor.virtual_column = true` shows the screen column, so a tab counts as
+  its display width, instead of the byte column.
 
 </details>
 
@@ -247,7 +305,9 @@ highlight groups are generated internally.
 Pinned buffers stay in a separate left-hand area and show a red `` matching the
 error color. Unpinned buffers scroll independently. If pins exceed the available
 width, the pinned area shows its own overflow counts.
-Pins are buffer-local and last for the current session. Filtering still
+Pins are buffer-local and last for the current session unless
+`buffers.persist_pins` is set: pinned paths are then stored in `g:SlimlinePins`
+and restored by `:mksession` when `sessionoptions` contains `globals`. Filtering still
 applies; cycling wraps through eligible pinned buffers, including ones hidden by
 overflow. New pins sort with the other pinned buffers in buffer-number order.
 Pinning does not protect a buffer from deletion. No keybindings are installed by default.
@@ -260,6 +320,25 @@ keys = {
   { "<leader>bn", function() require("slimline").next_pin() end, desc = "Next pinned buffer" },
 },
 ```
+
+</details>
+
+<details>
+<summary>Development</summary>
+
+Tests need no framework and run on Neovim 0.10 or newer:
+
+```sh
+nvim --headless -l tests/slimline.lua
+```
+
+Code style is enforced with [StyLua](https://github.com/JohnnyMorganz/StyLua)
+(`stylua lua tests`). CI runs both on Neovim 0.10, stable and nightly.
+
+Layout: `config` (options, validation), `colors` (highlight groups), `buffers`
+(list cache, pins, navigation, closing), `render` (statusline and tabline),
+`git` (async branch lookup), `health`, and `init` (public API and autocmds).
+See [CHANGELOG.md](CHANGELOG.md).
 
 </details>
 

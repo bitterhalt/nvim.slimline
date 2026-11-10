@@ -1,0 +1,319 @@
+*slimline.txt*  A small statusline with a built-in buffer list
+
+Author: bitterhalt
+License: MIT
+
+==============================================================================
+CONTENTS                                                   *slimline-contents*
+
+  1. Introduction ................................ |slimline-introduction|
+  2. Requirements ................................ |slimline-requirements|
+  3. Setup ....................................... |slimline-setup|
+  4. Options ..................................... |slimline-options|
+  5. Lua API ..................................... |slimline-api|
+  6. Buffer list ................................. |slimline-buffers|
+  7. Pins ........................................ |slimline-pins|
+  8. Mouse ....................................... |slimline-mouse|
+  9. Git, diagnostics and search ................. |slimline-components|
+ 10. Highlight groups ............................ |slimline-highlights|
+ 11. Health check ................................ |slimline-health|
+
+==============================================================================
+1. INTRODUCTION                                        *slimline-introduction*
+
+Slimline is a global statusline that combines the current mode, a tab styled
+buffer list, Git branch, diagnostics, encoding and cursor position. The buffer
+list can also be moved to the 'tabline'.
+
+==============================================================================
+2. REQUIREMENTS                                        *slimline-requirements*
+
+- Neovim 0.10 or newer.
+- Git, for branch information (optional).
+- A Nerd Font for the Git and pin icons (optional).
+- "nvim-tree/nvim-web-devicons" for colored file icons (optional).
+
+==============================================================================
+3. SETUP                                                      *slimline-setup*
+
+                                                            *slimline.setup()*
+require("slimline").setup([{options}])
+    Enable Slimline. {options} are merged with the defaults; every call
+    starts from the defaults, not from the previous configuration.
+
+    Setup sets 'laststatus' to 3 and 'statusline'. The 'tabline' is only
+    used when `buffers.position` is "top"; otherwise 'showtabline' is 0.
+    While `mode.enabled` and `mode.hide_showmode` are set, 'showmode' is
+    switched off. Other statusline plugins can overwrite these settings.
+
+    Invalid options do not abort startup. An error describing the problem is
+    shown and the default options are used.
+
+With lazy.nvim: >lua
+    {
+      "bitterhalt/nvim.slimline",
+      main = "slimline",
+      lazy = false,
+      opts = {},
+      dependencies = { "nvim-tree/nvim-web-devicons" }, -- optional
+    }
+<
+==============================================================================
+4. OPTIONS                                                  *slimline-options*
+
+Default values: >lua
+    {
+      icons = true,
+      encoding = { enabled = true },
+      recording = { icon = "REC" },
+      search = { enabled = false },
+      mode = {
+        enabled = true,
+        labels = {},
+        hide_showmode = true,
+      },
+      buffers = {
+        enabled = true,
+        position = "bottom",
+        max_name_length = 15,
+        min_width = 15,
+        close_icon = "×",
+        modified_icon = "*",
+        keep_layout = true,
+        persist_pins = false,
+        exclude_filetypes = {},
+        exclude_buftypes = {},
+      },
+      diagnostics = {
+        enabled = true,
+        error = "E!",
+        warn = "W!",
+        colors = {},
+      },
+      git = { enabled = true, icon = "\u{e725}", max_length = 24 },
+      cursor = {
+        enabled = true,
+        separator = " | ",
+        progress = true,
+        virtual_column = false,
+      },
+      highlights = {},
+    }
+<
+                                                     *slimline-opt-components*
+Component tables with `enabled = false` are hidden. Macro recording has no
+toggle: it appears only while a macro is being recorded.
+
+`icons`
+    File icons from nvim-web-devicons. This does not affect the Git or pin
+    symbols.
+
+`mode.labels`
+    Maps Neovim mode codes (see |mode()|) to the displayed label, for
+    example `{ n = "NORMAL", i = "INSERT" }`.
+
+`mode.hide_showmode`
+    Set 'noshowmode' during setup while the mode indicator is shown.
+
+`search.enabled`
+    Show `current/total` while 'hlsearch' is active. Counts above 999 are
+    shown as `>999`. See |searchcount()|.
+
+`buffers.position`
+    "bottom" draws the list in the statusline, "top" in the 'tabline'.
+
+`buffers.min_width`
+    Fixed slot width of one buffer, in display columns. Slots do not stretch
+    to fill free space.
+
+`buffers.max_name_length`
+    Longest displayed name. Follows `min_width` when omitted.
+
+`buffers.close_icon`, `buffers.modified_icon`
+    Marker symbols. An empty string hides the marker.
+
+`buffers.keep_layout`
+    When closing a buffer that is shown in windows, switch those windows to
+    another buffer first so splits are kept. With `false`, Neovim's plain
+    buffer deletion is used and the windows are closed.
+
+`buffers.persist_pins`
+    Store pinned file paths in `g:SlimlinePins`. Add "globals" to
+    'sessionoptions' so |:mksession| saves it. See |slimline-pins|.
+
+`buffers.exclude_filetypes`, `buffers.exclude_buftypes`
+    Hide matching buffers from the list. They are not closed.
+
+`cursor.separator`
+    Shared by every right-hand section. Hidden sections leave no dangling
+    separators.
+
+`cursor.virtual_column`
+    Show the screen column (see |virtcol()|) instead of the byte column.
+
+`highlights`
+    Highlight attribute overrides, see |slimline-highlights|.
+
+==============================================================================
+5. LUA API                                                      *slimline-api*
+
+All functions live in the `slimline` module. No keymaps are installed.
+
+                                                   *slimline.toggle_buffers()*
+toggle_buffers()
+    Show or hide the buffer list, including pins. Lasts until the next
+    |slimline.setup()| call or restart.
+
+                                                       *slimline.toggle_pin()*
+toggle_pin()
+    Pin or unpin the current buffer.
+
+                                                         *slimline.next_pin()*
+next_pin()                                               *slimline.prev_pin()*
+prev_pin()
+    Switch to the next or previous pinned buffer, wrapping around. From an
+    unpinned buffer, the next call selects the first pin and the previous
+    call the last.
+
+                                                      *slimline.next_buffer()*
+next_buffer()                                         *slimline.prev_buffer()*
+prev_buffer()
+    Switch to the next or previous buffer of the list, wrapping around.
+    Buffers hidden by the exclusion filters are skipped.
+
+                                                      *slimline.goto_buffer()*
+goto_buffer({n})
+    Jump to the {n}-th entry of the list (pinned buffers first). Negative
+    values count from the end: `-1` is the last buffer. Out of range values
+    are ignored.
+
+                                                     *slimline.close_buffer()*
+close_buffer([{buf}])
+    Close {buf} (default: the current buffer) without forcing unsaved
+    changes. Honors `buffers.keep_layout`. Returns whether it was closed; a
+    warning explains why not.
+
+                                                          *slimline.refresh()*
+refresh()
+    Rebuild the buffer list and refresh the Git branch.
+
+Example mappings: >lua
+    local slimline = require("slimline")
+    local map = vim.keymap.set
+    map("n", "<S-l>", slimline.next_buffer, { desc = "Next buffer" })
+    map("n", "<S-h>", slimline.prev_buffer, { desc = "Previous buffer" })
+    map("n", "<leader>bp", slimline.toggle_pin, { desc = "Pin" })
+    map("n", "<leader>bd", slimline.close_buffer, { desc = "Close" })
+    for i = 1, 9 do
+      map("n", "<leader>" .. i, function()
+        slimline.goto_buffer(i)
+      end, { desc = "Buffer " .. i })
+    end
+<
+==============================================================================
+6. BUFFER LIST                                              *slimline-buffers*
+
+The list contains listed buffers (see 'buflisted'), not tab pages. It is
+cached and rebuilt when buffers are added, deleted, renamed, written or
+modified, when 'buflisted' or 'filetype' changes, and after the editor has
+been idle (|CursorHold|).
+
+- Duplicate file names include their distinguishing path. Unnamed buffers
+  receive their buffer number when needed.
+- Hidden-buffer counts appear on either side of the viewport. The current
+  buffer stays in view when space permits.
+- The active buffer is bold cyan, or bold white when it is the only entry.
+  Special and unlisted buffers do not select an entry.
+- Close buttons appear only on unmodified, inactive buffers. Modified buffers
+  show the modified marker, green when focused.
+
+==============================================================================
+7. PINS                                                        *slimline-pins*
+
+Pinned buffers stay in a separate left-hand area and show a pin symbol in the
+error color. Unpinned buffers scroll independently. If the pins exceed the
+available width, the pinned area shows its own overflow counts.
+
+Pins last for the current session. They do not protect a buffer from
+deletion.
+
+With `buffers.persist_pins`, pinned file paths are written to the global
+`g:SlimlinePins` whenever a pin changes. Because its name starts with an
+uppercase letter, |:mksession| stores it when 'sessionoptions' contains
+"globals". Pins are restored on |SessionLoadPost|. Unnamed buffers cannot be
+persisted.
+
+==============================================================================
+8. MOUSE                                                      *slimline-mouse*
+
+- Left-click a buffer to switch to it.
+- Left-click the close button of an inactive buffer to close it.
+- Middle-click a buffer to close it.
+
+Closing never forces unsaved changes; a warning is shown instead.
+
+==============================================================================
+9. GIT, DIAGNOSTICS AND SEARCH                           *slimline-components*
+
+Git ~
+    Shows the branch of the current file, or `@` and a short commit hash for
+    a detached HEAD. Unnamed buffers use the working directory. Hidden
+    outside repositories and in special buffers. Checks are asynchronous and
+    cached, never run while the statusline is drawn. They refresh on
+    |BufEnter|, |BufFilePost|, |DirChanged|, |FocusGained|, |TermLeave|,
+    |ShellCmdPost| and the `FugitiveChanged` user event.
+
+Diagnostics ~
+    Error and warning counts of the current buffer, hidden at zero. Slimline
+    displays diagnostics supplied through |vim.diagnostic|; it does not
+    configure an LSP or linter.
+
+Encoding ~
+    The buffer's 'fileencoding', falling back to 'encoding' when empty.
+
+Recording ~
+    `REC @q` beside the mode while recording into register `q`.
+
+==============================================================================
+10. HIGHLIGHT GROUPS                                     *slimline-highlights*
+
+Most groups use `g:terminal_color_0` to `g:terminal_color_8` in true-color
+mode, falling back to |hl-Normal| colors. Without true color the terminal
+palette indexes are used. Transparent backgrounds are preserved. Colors and
+overrides are reapplied after |ColorScheme|.
+
+The `highlights` option accepts |nvim_set_hl()| attributes. Overrides merge
+with each group's defaults; a `link` replaces the group's attributes.
+
+    SlimlineBase          Inactive buffers, filler and separators
+    SlimlineText          Encoding and cursor information
+    SlimlineActive        Active buffer with multiple entries
+    SlimlineSingle        Active buffer when there is only one entry
+    SlimlineModified      Focused buffer's modified marker
+    SlimlineClose         Close button
+    SlimlineError         Error diagnostics
+    SlimlineWarning       Warning diagnostics
+    SlimlineGit           Git branch or commit
+    SlimlineRecording     Macro recording indicator
+    SlimlinePin           Pin symbol; links to SlimlineError by default
+    SlimlineModeNormal    Normal mode
+    SlimlineModeInsert    Insert mode
+    SlimlineModeVisual    Visual and select modes
+    SlimlineModeReplace   Replace mode
+    SlimlineModeCommand   Command mode and prompts
+    SlimlineModeTerminal  Terminal mode
+
+`diagnostics.colors` ({ error = "#rrggbb", warn = "#rrggbb" }) is the simplest
+way to change the error, warning and pin colors. `SlimlinePin` can be
+overridden on its own through `highlights`.
+
+==============================================================================
+11. HEALTH CHECK                                             *slimline-health*
+
+                                                       *:checkhealth-slimline*
+Run `:checkhealth slimline` to verify the Neovim version, the configuration,
+that Slimline still owns 'statusline' and 'tabline', 'laststatus', true color,
+git and devicons availability, and 'sessionoptions' when pins are persisted.
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

@@ -1,9 +1,2 @@
-.#*
+doc/tags
 .DS_Store
-
-# Vim/Neovim swap, backup, and undo files
-*.swp
-*.swo
-*.swn
-*~
-*.un~
