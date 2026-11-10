@@ -35,7 +35,7 @@ lua/slimline/
   util.lua     escape, width, truncate, redraw
 doc/slimline.txt   :help slimline
 tests/slimline.lua Test suite
-README.md, CHANGELOG.md
+README.md
 ```
 
 Dependency direction (no cycles): `init` -> `render` -> `buffers`/`git`/`colors` ->
@@ -64,8 +64,8 @@ reason. Keep it that way.
 - **Config:** `config.resolve()` merges and validates and raises `"Slimline: ..."` errors
   (via `error(msg, 0)`). `config.setup()` catches them, falls back to defaults and returns
   `false, err`. New options need: a default in `M.defaults`, a LuaLS `@field`, validation
-  if not a plain boolean/string, README + `doc/slimline.txt` + `CHANGELOG.md` entries, and a
-  test. Unknown keys are rejected, so forgetting the default breaks user configs.
+  if not a plain boolean/string, README + `doc/slimline.txt` entries, and a test.
+  Unknown keys are rejected, so forgetting the default breaks user configs.
 - **Colors:** `colors.apply()` defines groups, creates the `SlimlinePin` -> `SlimlineError`
   link **before** applying user `highlights`, then applies overrides in sorted order. Don't
   reorder: this was a real bug (the link used to overwrite user overrides).
@@ -115,7 +115,7 @@ reason. Keep it that way.
 - No new global state besides `_G.Slimline` (statusline/click entry points).
 - Public API lives in `init.lua`; keep it a thin layer over `buffers`/`git`.
 - Don't add runtime dependencies. Optional integrations must be guarded with `pcall`.
-- Keep `README.md`, `doc/slimline.txt` and `CHANGELOG.md` in sync with behavior changes.
+- Keep `README.md` and `doc/slimline.txt` in sync with behavior changes.
 
 ## Ideas not yet done
 

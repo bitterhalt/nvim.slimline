@@ -125,8 +125,8 @@ instead of the minimal installation spec above; omit options you do not need to 
     },
     diagnostics = {
       enabled = true,
-      error = "\u{ebfb} ",
-      warn = "\u{f071} ",
+      error = " ",
+      warn = " ",
       colors = {}, -- e.g. { error = "#ff5555", warn = "#f1c40f" }
     },
     git = { enabled = true, icon = "", max_length = 24 },
@@ -268,16 +268,16 @@ highlight groups are generated internally.
 
 All functions live in `require("slimline")`. No keybindings are installed.
 
-| Function                | Purpose                                                          |
-| ----------------------- | ---------------------------------------------------------------- |
-| `setup(opts)`           | Enable Slimline                                                  |
-| `toggle_buffers()`      | Show or hide the buffer list                                     |
-| `toggle_pin()`          | Pin or unpin the current buffer                                  |
-| `next_pin()`/`prev_pin()`       | Cycle through pinned buffers, wrapping                    |
-| `next_buffer()`/`prev_buffer()` | Cycle through the list, wrapping; respects exclusions     |
-| `goto_buffer(n)`        | Jump to the n-th entry (pinned first); `-1` is the last          |
-| `close_buffer(buf?)`    | Close a buffer without forcing; honors `keep_layout`             |
-| `refresh()`             | Rebuild the list and refresh Git                                 |
+| Function                        | Purpose                                                 |
+| ------------------------------- | ------------------------------------------------------- |
+| `setup(opts)`                   | Enable Slimline                                         |
+| `toggle_buffers()`              | Show or hide the buffer list                            |
+| `toggle_pin()`                  | Pin or unpin the current buffer                         |
+| `next_pin()`/`prev_pin()`       | Cycle through pinned buffers, wrapping                  |
+| `next_buffer()`/`prev_buffer()` | Cycle through the list, wrapping; respects exclusions   |
+| `goto_buffer(n)`                | Jump to the n-th entry (pinned first); `-1` is the last |
+| `close_buffer(buf?)`            | Close a buffer without forcing; honors `keep_layout`    |
+| `refresh()`                     | Rebuild the list and refresh Git                        |
 
 ```lua
 for i = 1, 9 do
@@ -338,7 +338,6 @@ Code style is enforced with [StyLua](https://github.com/JohnnyMorganz/StyLua)
 Layout: `config` (options, validation), `colors` (highlight groups), `buffers`
 (list cache, pins, navigation, closing), `render` (statusline and tabline),
 `git` (async branch lookup), `health`, and `init` (public API and autocmds).
-See [CHANGELOG.md](CHANGELOG.md).
 
 </details>
 
