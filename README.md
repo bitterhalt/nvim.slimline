@@ -147,7 +147,8 @@ instead of the minimal installation spec above; omit options you do not need to 
   tabline instead; mode, Git, diagnostics, and cursor info remain at the bottom.
   Other statusline/bufferline plugins can overwrite these settings.
 - `showmode` is switched off while the mode indicator is shown, so the mode is
-  not displayed twice. Set `mode.hide_showmode = false` to keep it.
+  not displayed twice. Set `mode.hide_showmode = false` to keep it; the previous
+  value is restored when the indicator or this option is disabled.
 - Invalid options do not abort startup: the problem is shown with `vim.notify`
   and the defaults are used. If rendering ever fails, Slimline falls back to a
   plain statusline and reports the error once.

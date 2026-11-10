@@ -13,6 +13,8 @@ local STATUSLINE = "%!v:lua.Slimline.statusline()"
 local TABLINE = "%!v:lua.Slimline.tabline()"
 
 local failed = false
+-- 'showmode' value before Slimline disabled it; nil when Slimline has not touched it.
+local saved_showmode
 
 --- Wrap a renderer so an error never takes the whole statusline down. Neovim
 --- resets the option when a `%!` expression throws, so fall back to a plain
@@ -206,7 +208,13 @@ function M.setup(options)
 	end
 	vim.o.statusline = STATUSLINE
 	if opts.mode.enabled and opts.mode.hide_showmode then
+		if saved_showmode == nil then
+			saved_showmode = vim.o.showmode
+		end
 		vim.o.showmode = false
+	elseif saved_showmode ~= nil then
+		vim.o.showmode = saved_showmode
+		saved_showmode = nil
 	end
 
 	create_autocmds()

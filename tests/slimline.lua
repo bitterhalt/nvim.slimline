@@ -249,14 +249,28 @@ test("mode.labels override by raw mode code", function()
 	matches(statusline_text(), " NORMAL ")
 end)
 
-test("setup hides 'showmode' unless told otherwise", function()
+test("setup hides 'showmode' and restores it when disabled", function()
+	-- Clear state left by earlier tests before checking restoration.
+	fresh({ mode = { hide_showmode = false } })
 	vim.o.showmode = true
 	fresh()
 	eq(vim.o.showmode, false)
-	vim.o.showmode = true
 	fresh({ mode = { hide_showmode = false } })
 	eq(vim.o.showmode, true)
+
+	vim.o.showmode = true
+	fresh()
+	eq(vim.o.showmode, false)
+	fresh({ mode = { enabled = false } })
+	eq(vim.o.showmode, true)
+
+	-- Do not force 'showmode' on when the user already had it off.
 	vim.o.showmode = false
+	fresh()
+	eq(vim.o.showmode, false)
+	fresh({ mode = { hide_showmode = false } })
+	eq(vim.o.showmode, false)
+	vim.o.showmode = true
 end)
 
 ---------------------------------------------------------------------------

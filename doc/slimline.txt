@@ -44,7 +44,8 @@ require("slimline").setup([{options}])
     Setup sets 'laststatus' to 3 and 'statusline'. The 'tabline' is only
     used when `buffers.position` is "top"; otherwise 'showtabline' is 0.
     While `mode.enabled` and `mode.hide_showmode` are set, 'showmode' is
-    switched off. Other statusline plugins can overwrite these settings.
+    switched off. Its previous value is restored when either option is
+    disabled. Other statusline plugins can overwrite these settings.
 
     Invalid options do not abort startup. An error describing the problem is
     shown and the default options are used.
@@ -113,7 +114,9 @@ toggle: it appears only while a macro is being recorded.
     example `{ n = "NORMAL", i = "INSERT" }`.
 
 `mode.hide_showmode`
-    Set 'noshowmode' during setup while the mode indicator is shown.
+    Set 'noshowmode' during setup while the mode indicator is shown. The
+    original value is restored when the option or the mode indicator is
+    disabled.
 
 `search.enabled`
     Show `current/total` while 'hlsearch' is active. Counts above 999 are
