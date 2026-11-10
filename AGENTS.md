@@ -86,8 +86,9 @@ reason. Keep it that way.
 - **Modified-state events are deferred to the main loop.** They never fire under
   `nvim -l`, and setting `vim.bo.modified` directly fires nothing. Tests trigger them with
   `nvim_exec_autocmds`.
-- **Nerd Font glyphs are invisible in many editors/pastes.** Write them as escapes:
-  `"\u{e725}"` (git), `"\u{f435}"` (pin). Never retype them as literal characters.
+- **Nerd Font glyphs are stored as literal UTF-8 characters.** Copy them from existing
+  code or a known source instead of retyping; `\u{...}` escapes render as text in README
+  and help files.
 - **Escape `%` in anything placed in a statusline string** with `util.escape`, which
   returns exactly one value. Use `util.width`/`util.truncate` for display widths (CJK, icons).
 - **`:checkhealth` renders asynchronously on newer Neovim**; wait for its output in tests.

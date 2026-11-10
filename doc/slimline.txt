@@ -80,8 +80,8 @@ Default values: >lua
         min_width = 15,
         close_icon = "×",
         modified_icon = "*",
-        placeholder_icon = "\u{f0214}",
-        saved_icon = "\u{f012c}",
+        placeholder_icon = "󰈔",
+        saved_icon = "󰄬",
         keep_layout = true,
         persist_pins = false,
         exclude_filetypes = {},
@@ -89,8 +89,8 @@ Default values: >lua
       },
       diagnostics = {
         enabled = true,
-        error = "\u{ebfb} ",
-        warn = "\u{f071} ",
+        error = " ",
+        warn = " ",
         colors = {},
       },
       git = { enabled = true, icon = "", max_length = 24 },
@@ -138,8 +138,9 @@ toggle: it appears only while a macro is being recorded.
     Marker symbols. An empty string hides the marker.
 
 `buffers.placeholder_icon`
-    Icon shown for files that nvim-web-devicons has no icon for. Only used
-    when `icons` is enabled. An empty string hides it.
+    Icon shown for files that nvim-web-devicons has no icon for, or when it
+    is not installed. Only used when `icons` is enabled. An empty string
+    hides it.
 
 `buffers.saved_icon`
     Check mark shown on the focused buffer while it has no unsaved changes,

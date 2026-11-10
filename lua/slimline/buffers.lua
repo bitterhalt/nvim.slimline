@@ -3,7 +3,7 @@ local util = require("slimline.util")
 
 local M = {}
 
-M.PIN_GLYPH = "\u{f435}"
+M.PIN_GLYPH = ""
 
 ---@class slimline.Item
 ---@field buf integer
@@ -31,12 +31,12 @@ end
 ---@return string icon Glyph followed by padding, or ""
 ---@return string? highlight devicons highlight group
 local function icon_for(devicons, name, filetype, placeholder)
-	if not devicons then
-		return "", nil
-	end
-	local icon, highlight = devicons.get_icon(name, nil, { default = false })
-	if not icon and filetype ~= "" then
-		icon, highlight = devicons.get_icon_by_filetype(filetype, { default = false })
+	local icon, highlight
+	if devicons then
+		icon, highlight = devicons.get_icon(name, nil, { default = false })
+		if not icon and filetype ~= "" then
+			icon, highlight = devicons.get_icon_by_filetype(filetype, { default = false })
+		end
 	end
 	if icon then
 		return icon .. "  ", highlight
@@ -51,8 +51,9 @@ local function build()
 	if not options.enabled then
 		return result
 	end
+	local use_icons = config.options.icons
 	local devicons
-	if config.options.icons then
+	if use_icons then
 		local ok, module = pcall(require, "nvim-web-devicons")
 		devicons = ok and module or nil
 	end
@@ -74,7 +75,10 @@ local function build()
 	for _, buf in ipairs(listed) do
 		local path = vim.api.nvim_buf_get_name(buf)
 		local name = path == "" and "[No Name]" or vim.fn.fnamemodify(path, ":t")
-		local icon, icon_highlight = icon_for(devicons, name, vim.bo[buf].filetype, options.placeholder_icon)
+		local icon, icon_highlight = "", nil
+		if use_icons then
+			icon, icon_highlight = icon_for(devicons, name, vim.bo[buf].filetype, options.placeholder_icon)
+		end
 		local text
 		if path ~= "" and counts[name] > 1 then
 			-- Keep the filename and its distinguishing parent path intact.

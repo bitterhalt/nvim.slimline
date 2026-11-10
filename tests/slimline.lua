@@ -373,7 +373,7 @@ test("files without a devicon use the placeholder icon", function()
 	package.loaded["nvim-web-devicons"] = {
 		get_icon = function(name)
 			if name:match("%.lua$") then
-				return "\u{e725}", "DevIconLua"
+				return "", "DevIconLua"
 			end
 		end,
 		get_icon_by_filetype = function()
@@ -383,8 +383,8 @@ test("files without a devicon use the placeholder icon", function()
 	fresh()
 	open({ "/proj/a.lua", "/proj/b.unknownext" })
 	local list = buffers.list()
-	eq(list[1].icon, "\u{e725}  ", "a devicon still wins")
-	eq(list[2].icon, "\u{f0214}  ")
+	eq(list[1].icon, "  ", "a devicon still wins")
+	eq(list[2].icon, "󰈔  ")
 
 	fresh({ icons = false })
 	open({ "/proj/a.unknownext" })
@@ -395,6 +395,20 @@ test("files without a devicon use the placeholder icon", function()
 	eq(buffers.list()[1].icon, "", "an empty placeholder is hidden")
 
 	package.loaded["nvim-web-devicons"] = original
+end)
+
+test("the placeholder also appears without nvim-web-devicons", function()
+	local loaded = package.loaded["nvim-web-devicons"]
+	local preload = package.preload["nvim-web-devicons"]
+	package.loaded["nvim-web-devicons"] = nil
+	package.preload["nvim-web-devicons"] = function()
+		error("not installed")
+	end
+	fresh()
+	open({ "/proj/a.unknownext" })
+	eq(buffers.list()[1].icon, "󰈔  ")
+	package.loaded["nvim-web-devicons"] = loaded
+	package.preload["nvim-web-devicons"] = preload
 end)
 
 ---------------------------------------------------------------------------
@@ -417,15 +431,15 @@ end)
 test("the focused unmodified buffer shows a check mark", function()
 	fresh()
 	local bufs = open({ "/proj/a.lua", "/proj/b.lua" })
-	matches(statusline_text(), "\u{f012c}")
+	matches(statusline_text(), "󰄬")
 	vim.bo[bufs[1]].modified = true
 	vim.api.nvim_exec_autocmds("OptionSet", { pattern = "modified" })
 	flush()
-	absent(statusline_text(), "\u{f012c}", "modified buffers show no check mark")
+	absent(statusline_text(), "󰄬", "modified buffers show no check mark")
 
 	fresh({ buffers = { saved_icon = "" } })
 	open({ "/proj/a.lua", "/proj/b.lua" })
-	absent(statusline_text(), "\u{f012c}", "an empty saved_icon hides the check mark")
+	absent(statusline_text(), "󰄬", "an empty saved_icon hides the check mark")
 end)
 
 test("percent signs in names are escaped", function()
