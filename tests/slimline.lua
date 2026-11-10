@@ -417,7 +417,7 @@ test("search count appears only when enabled and hlsearch is active", function()
 end)
 
 test("diagnostics show error and warning counts", function()
-	fresh()
+	fresh({ diagnostics = { error = "E", warn = "W" } })
 	local buf = open({ "/proj/a.lua" })[1]
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "a", "b", "c" })
 	local ns = vim.api.nvim_create_namespace("slimline-test")
@@ -429,10 +429,10 @@ test("diagnostics show error and warning counts", function()
 		{ lnum = 2, col = 0, message = "h", severity = S.HINT },
 	})
 	local text = statusline_text()
-	matches(text, "E! 2")
-	matches(text, "W! 1")
+	matches(text, "E 2")
+	matches(text, "W 1")
 	vim.diagnostic.reset(ns, buf)
-	absent(statusline_text(), "E!")
+	absent(statusline_text(), "E 2")
 end)
 
 test("narrow windows keep the statusline within the editor width", function()

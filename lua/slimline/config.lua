@@ -65,8 +65,8 @@ M.defaults = {
 		exclude_filetypes = {},
 		exclude_buftypes = {},
 	},
-	diagnostics = { enabled = true, error = "E!", warn = "W!", colors = {} },
-	git = { enabled = true, icon = "\u{e725}", max_length = 24 },
+	diagnostics = { enabled = true, error = " ", warn = " ", colors = {} },
+	git = { enabled = true, icon = "", max_length = 24 },
 	cursor = { enabled = true, separator = " | ", progress = true, virtual_column = false },
 	highlights = {},
 }

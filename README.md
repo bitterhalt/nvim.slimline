@@ -125,8 +125,8 @@ instead of the minimal installation spec above; omit options you do not need to 
     },
     diagnostics = {
       enabled = true,
-      error = "E!",
-      warn = "W!",
+      error = "\u{ebfb} ",
+      warn = "\u{f071} ",
       colors = {}, -- e.g. { error = "#ff5555", warn = "#f1c40f" }
     },
     git = { enabled = true, icon = "", max_length = 24 },

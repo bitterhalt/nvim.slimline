@@ -86,11 +86,11 @@ Default values: >lua
       },
       diagnostics = {
         enabled = true,
-        error = "E!",
-        warn = "W!",
+        error = "\u{ebfb} ",
+        warn = "\u{f071} ",
         colors = {},
       },
-      git = { enabled = true, icon = "\u{e725}", max_length = 24 },
+      git = { enabled = true, icon = "", max_length = 24 },
       cursor = {
         enabled = true,
         separator = " | ",
