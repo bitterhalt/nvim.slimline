@@ -598,6 +598,41 @@ test("toggle_buffers also drives showtabline when on top", function()
 	eq(vim.o.showtabline, 2)
 end)
 
+test("toggle_position moves the list between bottom and top", function()
+	fresh()
+	open({ "/proj/a.lua" })
+	matches(statusline_text(), "a.lua")
+	eq(vim.o.showtabline, 0)
+
+	slimline.toggle_position()
+	eq(config.options.buffers.position, "top")
+	eq(vim.o.showtabline, 2)
+	eq(vim.o.tabline, "%!v:lua.Slimline.tabline()")
+	matches(vim.api.nvim_eval_statusline(slimline.tabline(), {}).str, "a.lua")
+	absent(statusline_text(), "a.lua")
+
+	slimline.toggle_position()
+	eq(config.options.buffers.position, "bottom")
+	eq(vim.o.showtabline, 0)
+	eq(vim.o.tabline, "")
+	matches(statusline_text(), "a.lua")
+	eq(slimline.tabline(), "")
+end)
+
+test("toggle_position keeps a hidden list hidden", function()
+	fresh({ buffers = { position = "top" } })
+	open({ "/proj/a.lua" })
+	slimline.toggle_buffers()
+	slimline.toggle_position()
+	eq(config.options.buffers.position, "bottom")
+	eq(vim.o.showtabline, 0)
+	absent(statusline_text(), "a.lua")
+	slimline.toggle_position()
+	eq(config.options.buffers.position, "top")
+	eq(vim.o.showtabline, 0)
+	eq(slimline.tabline(), "")
+end)
+
 ---------------------------------------------------------------------------
 -- Pins and navigation
 ---------------------------------------------------------------------------

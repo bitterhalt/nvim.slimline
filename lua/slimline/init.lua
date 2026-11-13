@@ -35,6 +35,18 @@ local function guarded(name, fallback)
 	end
 end
 
+--- Point the tabline at Slimline or clear it, matching `buffers.position`.
+local function apply_position()
+	local options = config.options.buffers
+	local top = options.position == "top"
+	vim.o.showtabline = (top and options.enabled) and 2 or 0
+	if top then
+		vim.o.tabline = TABLINE
+	elseif vim.o.tabline == TABLINE then
+		vim.o.tabline = ""
+	end
+end
+
 ---------------------------------------------------------------------------
 -- Public API
 ---------------------------------------------------------------------------
@@ -46,6 +58,16 @@ function M.toggle_buffers()
 	if options.position == "top" then
 		vim.o.showtabline = options.enabled and 2 or 0
 	end
+	buffers.invalidate()
+	util.redraw()
+end
+
+--- Move the buffer list between the bottom statusline and the top tabline.
+--- Lasts until the next `setup()` or restart.
+function M.toggle_position()
+	local options = config.options.buffers
+	options.position = options.position == "top" and "bottom" or "top"
+	apply_position()
 	buffers.invalidate()
 	util.redraw()
 end
@@ -192,13 +214,7 @@ function M.setup(options)
 
 	local opts = config.options
 	vim.o.laststatus = 3
-	local top = opts.buffers.position == "top"
-	vim.o.showtabline = (top and opts.buffers.enabled) and 2 or 0
-	if top then
-		vim.o.tabline = TABLINE
-	elseif vim.o.tabline == TABLINE then
-		vim.o.tabline = ""
-	end
+	apply_position()
 	vim.o.statusline = STATUSLINE
 	if opts.mode.enabled and opts.mode.hide_showmode then
 		if saved_showmode == nil then

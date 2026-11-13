@@ -88,6 +88,11 @@ instead of the minimal installation spec above; omit options you do not need to 
       desc = "Toggle Slimline buffers",
     },
     {
+      "<leader>bv",
+      function() require("slimline").toggle_position() end,
+      desc = "Toggle Slimline buffer position",
+    },
+    {
       "<leader>bp",
       function() require("slimline").toggle_pin() end,
       desc = "Toggle buffer pin",
@@ -167,6 +172,16 @@ instead of the minimal installation spec above; omit options you do not need to 
   vim.keymap.set("n", "<leader>bt", function()
     require("slimline").toggle_buffers()
   end, { desc = "Toggle Slimline buffers" })
+  ```
+
+- `require("slimline").toggle_position()` moves the buffer list between the
+  bottom statusline and the top tabline at runtime. This also lasts until the
+  next `setup()` call or restart.
+
+  ```lua
+  vim.keymap.set("n", "<leader>bv", function()
+    require("slimline").toggle_position()
+  end, { desc = "Toggle Slimline buffer position" })
   ```
 
 - `mode.labels` maps Neovim mode codes, not the displayed labels. See `:help mode()`.
@@ -275,15 +290,16 @@ highlight groups are generated internally.
 
 All functions live in `require("slimline")`. No keybindings are installed.
 
-| Function                        | Purpose                                                 |
-| ------------------------------- | ------------------------------------------------------- |
-| `setup(opts)`                   | Enable Slimline                                         |
-| `toggle_buffers()`              | Show or hide the buffer list                            |
-| `toggle_pin()`                  | Pin or unpin the current buffer                         |
-| `next_pin()`/`prev_pin()`       | Cycle through pinned buffers, wrapping                  |
-| `next_buffer()`/`prev_buffer()` | Cycle through the list, wrapping; respects exclusions   |
-| `close_buffer(buf?)`            | Close a buffer without forcing; honors `keep_layout`    |
-| `refresh()`                     | Rebuild the list and refresh Git                        |
+| Function                        | Purpose                                               |
+| ------------------------------- | ----------------------------------------------------- |
+| `setup(opts)`                   | Enable Slimline                                       |
+| `toggle_buffers()`              | Show or hide the buffer list                          |
+| `toggle_position()`             | Move the buffer list between bottom and top           |
+| `toggle_pin()`                  | Pin or unpin the current buffer                       |
+| `next_pin()`/`prev_pin()`       | Cycle through pinned buffers, wrapping                |
+| `next_buffer()`/`prev_buffer()` | Cycle through the list, wrapping; respects exclusions |
+| `close_buffer(buf?)`            | Close a buffer without forcing; honors `keep_layout`  |
+| `refresh()`                     | Rebuild the list and refresh Git                      |
 
 </details>
 

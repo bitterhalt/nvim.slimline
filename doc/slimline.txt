@@ -178,6 +178,11 @@ toggle_buffers()
     Show or hide the buffer list, including pins. Lasts until the next
     |slimline.setup()| call or restart.
 
+                                                  *slimline.toggle_position()*
+toggle_position()
+    Move the buffer list between the bottom statusline and the top
+    'tabline'. Lasts until the next |slimline.setup()| call or restart.
+
                                                        *slimline.toggle_pin()*
 toggle_pin()
     Pin or unpin the current buffer.
@@ -211,6 +216,7 @@ Example mappings: >lua
     map("n", "<S-l>", slimline.next_buffer, { desc = "Next buffer" })
     map("n", "<S-h>", slimline.prev_buffer, { desc = "Previous buffer" })
     map("n", "<leader>bp", slimline.toggle_pin, { desc = "Pin" })
+    map("n", "<leader>bv", slimline.toggle_position, { desc = "Buffer position" })
     map("n", "<leader>bd", slimline.close_buffer, { desc = "Close" })
 <
 ==============================================================================
