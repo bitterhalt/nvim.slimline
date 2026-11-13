@@ -1,7 +1,5 @@
 # Slimline
 
-[![CI](https://github.com/bitterhalt/nvim.slimline/actions/workflows/ci.yml/badge.svg)](https://github.com/bitterhalt/nvim.slimline/actions/workflows/ci.yml)
-
 A small Neovim statusline combining a buffer list
 
 ## Features
